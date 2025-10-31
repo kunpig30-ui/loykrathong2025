@@ -1,5 +1,5 @@
 /* ===== Splash ===== */
-(function(){
+function(){
   const splash = document.getElementById('splash');
   const startBtn = document.getElementById('startBtn');
   const bgm = document.getElementById('bgm');
