@@ -1,11 +1,11 @@
-const CACHE_NAME = 'loykrathong-v3';   // bump cache
+const CACHE_NAME = 'loykrathong-v3';
 const URLS = [
-  './','index.html','manifest.json',
+  './', 'index.html', 'manifest.json',
   'images/bg5.png','images/bg5mb.png',
   'images/kt1.png','images/kt2.png','images/kt3.png','images/kt4.png','images/kt5.png',
   'images/tuktuk.png','images/logo.png',
   'images/icon-192.png','images/icon-512.png'
-  // ไม่ cache song.mp3 เพื่อลดปัญหา Range/416
+  // ไม่ cache audio เพื่อกันปัญหา 416
 ];
 
 self.addEventListener('install', e => {
@@ -22,13 +22,13 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
 
-  // ถ้าเป็น Range request (เช่น audio/video) → อย่าแตะ cache
+  // ถ้าเป็น Range request (เช่นไฟล์เสียง) -> network only
   if (req.headers && req.headers.get('range')) {
-    e.respondWith(fetch(req));  // network only
+    e.respondWith(fetch(req));
     return;
   }
 
-  // อย่า cache ไฟล์เสียง
+  // โฟลเดอร์เสียง -> network-first (ไม่แคช)
   if (req.url.includes('/audio/')) {
     e.respondWith(fetch(req).catch(() => caches.match(req)));
     return;
