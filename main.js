@@ -86,6 +86,10 @@
     requestAnimationFrame(animate);
   }
 
+  // แทนโค้ดเก่าที่ new Audio(...)
+const audio = document.getElementById('bgm');
+// เรียกเล่น/หยุดด้วย audio.play() / audio.pause()
+  
   document.addEventListener("click", () => {
     launchKrathong();
     createFirework();
