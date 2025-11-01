@@ -93,9 +93,6 @@
     splash?.addEventListener('pointerdown', begin, {once:true});
   })();
 
-  if('serviceWorker' in navigator){
-    addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js?v=5').catch(()=>{}); });
-  }
 
   document.getElementById('tapMusic')?.addEventListener('click', ()=>{
     const bgm=document.getElementById('bgm');
