@@ -7,14 +7,20 @@
   const bgEl = document.getElementById('bgLayer');
   const IS_MOBILE = matchMedia('(max-width:640px)').matches;
 
-  // ======== TUNE ME (จูนเร็ว) ========
-const BG_DY   = -4;   // ยกพื้นหลังขึ้นเล็กน้อย
-const ROAD_DY = +18;  // ดันเส้นถนนลง
-const LANE_STEP = 14;
-const LANE_SURFACE_LIFT = 10;  // ผิวน้ำใกล้พื้นจริง
-const LANE_MAX_BELOW_ROAD = 16; // กันกระทงลอยสูงเกิน
-// ===================================
+ // ========= QUICK TUNE =========
+const BG_SHIFT_PX = -12;   // ยกภาพพื้นหลังขึ้น (ติดลบ = ยกขึ้น)  ปรับทีละ 2px
+const ROAD_DY     = +18;   // ดันเส้นถนนลงจากผิวน้ำ (px)
+const LANES       = 5;     // จำนวนเลน
+const LANE_STEP   = 14;    // ระยะห่างเลน
+const BUBBLE_PADY = 0.9;   // ฟองคำอธิษฐานห่างตัวกระทง (0.9 = 90% ของขนาด)
+const KR_SIZE     = 60;    // ขนาดกระทง
 
+// ยกภาพพื้นหลังจริง (img#bgLayer)
+const bgEl = document.getElementById('bgLayer');
+if (bgEl) {
+  bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
+}
+// ==============================
   function size() {
     const h = header ? header.offsetHeight : 0;
     cvs.width  = innerWidth;
@@ -75,67 +81,97 @@ const LANE_MAX_BELOW_ROAD = 16; // กันกระทงลอยสูงเ
   }
   renderWish();
 
-  // lanes (no collision)
-  function laneY(i){
-    const base = waterY() - krSize()*0.5 + LANE_SURFACE_LIFT;
-    // ไม่ให้สูงจนทับเส้นถนน
-    const maxY = roadY() - LANE_MAX_BELOW_ROAD;
-    return Math.min(base + i*LANE_STEP, maxY);
-  }
+  // ผิวน้ำอิงสัดส่วนจอ (เรียบง่าย + เสถียรกับมือถือ)
+const waterY = () => Math.round(cvs.height * 0.80);
+const roadY  = () => waterY() + ROAD_DY;
+
+// ตำแหน่งเลน 5 เส้น (กันชน)
+function laneY(i){ 
+  return waterY() + 10 + i * LANE_STEP; // ยกให้ห่างผิวน้ำเล็กน้อย ดูไม่ชนเส้นคลื่น
+}
   const rnd = (a,b)=>Math.random()*(b-a)+a;
 
   class Krathong{
-    constructor(img,lane,offset){
-      this.img=img; this.lane=lane;
-      this.x = -220 - offset;                // กระจายตอนเริ่ม
-      this.vx = rnd(22,28) + lane*0.6;       // ความเร็วต่างกันเล็กน้อยต่อเลน
-      this.phase=rnd(0,Math.PI*2); this.amp=2; this.freq=1.0; this.t=0;
-      this.text='';
-    }
-    setWish(s){ this.text=(s||'').trim(); }
-    get y(){ return laneY(this.lane) + Math.sin(this.t*this.freq+this.phase)*this.amp; }
-    update(dt){
-      this.t+=dt; this.x+=this.vx*dt;
-      // เมื่อวนกลับซ้าย ให้สุ่มหน่วงเพิ่มเพื่อไม่เกาะกลุ่ม
-      if(this.x>cvs.width+160){ this.x = -160 - rnd(60,180); }
-    }
-    draw(g){
-      const wy=waterY();
-      // เงา
-      const rx=krSize()*.55, ry=6;
-      const grd=g.createRadialGradient(this.x,wy,1,this.x,wy,rx);
-      grd.addColorStop(0,'rgba(0,0,0,.22)'); grd.addColorStop(1,'rgba(0,0,0,0)');
-      g.fillStyle=grd; g.beginPath(); g.ellipse(this.x,wy,rx,ry,0,0,Math.PI*2); g.fill();
-      // ตัวกระทง
-      if(this.img && this.img._ok) g.drawImage(this.img, this.x-krSize()/2, this.y-krSize()/2, krSize(), krSize());
-      else{ g.fillStyle='#27ae60'; g.beginPath(); g.arc(this.x,this.y,krSize()/2,0,Math.PI*2); g.fill(); }
-      // คำอธิษฐาน — ไม่หมดเวลา อยู่ไปจนพ้นจอขวา
-      if(this.text){
-        const msg = clip(this.text,(innerWidth<=420)?18:22);
-        g.save();
-        g.font = (innerWidth<=420?'600 14px':'600 16px')+" system-ui,'TH Sarabun New',Prompt,sans-serif";
-        g.textAlign='center'; g.textBaseline='middle';
-        const padX=12, h=28, w=Math.min(340, Math.max(80, g.measureText(msg).width + padX*2));
-        const cx=this.x, cy=this.y - krSize()*0.9;
-        g.globalAlpha=.92; g.fillStyle='#0e1726'; roundRect(g,cx-w/2,cy-h/2,w,h,14); g.fill();
-        g.globalAlpha=1; g.strokeStyle='rgba(255,255,255,.28)'; g.lineWidth=1; roundRect(g,cx-w/2,cy-h/2,w,h,14); g.stroke();
-        g.fillStyle='#e9f0ff'; g.fillText(msg,cx,cy);
-        g.restore();
-      }
+  constructor(img, lane, offset){
+    this.img   = img;
+    this.lane  = lane;
+    this.size  = KR_SIZE;
+
+    // เริ่มเหลื่อมกัน -> กันบีบอัดเป็นก้อน
+    this.x  = -220 - offset;
+    this.vx = 22 + Math.random() * 6;  // 22–28 px/s
+
+    // แกว่งเบาๆ
+    this.phase = Math.random() * Math.PI * 2;
+    this.amp   = 2;
+    this.freq  = 1.0;
+    this.t     = 0;
+
+    // ข้อความ ไม่หมดเวลา — จนกว่าจะออกนอกจอ
+    this.text  = '';
+  }
+
+  setWish(s){ this.text = (s || '').trim(); }
+
+  get y(){
+    return laneY(this.lane) + Math.sin(this.t * this.freq + this.phase) * this.amp;
+  }
+
+  update(dt){
+    this.t  += dt;
+    this.x  += this.vx * dt;
+
+    // ออกขวาแล้ววนกลับซ้าย (เริ่มใหม่แบบเหลื่อม)
+    if (this.x > cvs.width + 160){
+      this.x = -160 - Math.random() * 120;
+      // คงเลนเดิมไว้เพื่อไม่ให้ชนกัน
     }
   }
 
-  // 5 ใบ + offset กันซ้อนตั้งแต่เริ่ม
-  const boats = krImgs.map((im,i)=> new Krathong(im, i, 90 + i*120));
-  let nextIdx=0;
+  draw(g){
+    const wy=waterY();
 
-  // launch
-  const wishEl=document.getElementById('wish');
-  const toast =document.getElementById('toast');
-  function showToast(){ toast?.classList.add('show'); setTimeout(()=>toast?.classList.remove('show'),700); }
- document.getElementById('launch')?.addEventListener('click', async ()=>{
-  try {
-    // ป้องกัน double-click ค้าง
+    // เงาที่ผิวน้ำ (เนียน)
+    const rx=this.size*.55, ry=6;
+    const grd=g.createRadialGradient(this.x,wy,1,this.x,wy,rx);
+    grd.addColorStop(0,'rgba(0,0,0,.22)');
+    grd.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=grd;
+    g.beginPath(); g.ellipse(this.x,wy,rx,ry,0,0,Math.PI*2); g.fill();
+
+    // ตัวกระทง (รูปจริงก่อน, วงกลมสำรอง)
+    if(this.img && this.img._ok){
+      g.drawImage(this.img, this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    } else {
+      g.fillStyle='#27ae60';
+      g.beginPath(); g.arc(this.x, this.y, this.size/2, 0, Math.PI*2); g.fill();
+    }
+
+    // ฟองคำอธิษฐาน: ไม่นับเวลา -> วิ่งตามจนสุดขวา
+    if(this.text){
+      const msg = clip(this.text, (innerWidth<=420) ? 18 : 22);
+      g.save();
+      g.font = (innerWidth<=420? "600 14px":"600 16px")+" system-ui, 'TH Sarabun New', Prompt, sans-serif";
+      g.textAlign="center"; g.textBaseline="middle";
+      const padX=12, h=28, w=Math.min(340, Math.max(80, g.measureText(msg).width + padX*2));
+      const cx=this.x, cy=this.y - this.size*BUBBLE_PADY;
+      g.globalAlpha=.92; g.fillStyle="#0e1726";
+      roundRect(g, cx - w/2, cy - h/2, w, h, 14); g.fill();
+      g.globalAlpha=1; g.strokeStyle="rgba(255,255,255,.28)"; g.lineWidth=1;
+      roundRect(g, cx - w/2, cy - h/2, w, h, 14); g.stroke();
+      g.fillStyle="#e9f0ff"; g.fillText(msg, cx, cy);
+      g.restore();
+    }
+  }
+}
+
+ // สร้าง 5 ใบ คนละเลน + offset ให้ไม่เกาะกลุ่ม
+const boats = krImgs.map((im,i)=> new Krathong(im, i % LANES, i*120));
+let nextIdx = 0;
+
+// ปุ่มปล่อย (กันกดรัว + ไม่ค้าง)
+document.getElementById('launch')?.addEventListener('click', async ()=>{
+  try{
     const btn = document.getElementById('launch');
     if (!btn || btn.disabled) return;
     btn.disabled = true;
@@ -143,29 +179,20 @@ const LANE_MAX_BELOW_ROAD = 16; // กันกระทงลอยสูงเ
     const t = (wishEl?.value || '').trim();
     if (t) {
       boats[nextIdx].setWish(t);
-      nextIdx = (nextIdx + 1) % boats.length;
+      nextIdx = (nextIdx + 1) % boats.length; // วนไปทีละใบ
     }
     if (wishEl) wishEl.value = '';
 
-    bump();
-    pushWish(t);
-    showToast();
+    bump(); pushWish(t); showToast();
 
-    // ปรับ audio ให้ไม่โหลดซ้ำ
     if (bgm && bgm.paused) {
       bgm.currentTime = 0;
-      await bgm.play().catch(err => console.warn('BGM play fail', err));
+      await bgm.play().catch(()=>{});
     }
-
-    // เปิด animation loop ต่อได้ปกติ
-    requestAnimationFrame(loop);
-  } catch (e) {
-    console.error('Launch error', e);
   } finally {
-    setTimeout(()=>btn.disabled=false, 600); // ป้องกัน spam
+    setTimeout(()=>{ const b=document.getElementById('launch'); if(b) b.disabled=false; }, 500);
   }
 });
-
   // fireworks (3 จุด โลโก้)
   class Firework{
     constructor(x){ this.x=x; this.y=waterY(); this.vy=-240; this.state='rise'; this.parts=[]; }
@@ -188,16 +215,22 @@ const LANE_MAX_BELOW_ROAD = 16; // กันกระทงลอยสูงเ
 
   // road & tuk (tuk อยู่เหนือเส้น ไม่ตกน้ำ)
   const tuk={x:-220,w:140,h:90,speed:35};
-  function drawRoadLine(){
-    const y=roadY(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
-  }
-  function drawTuk(dt){
-    tuk.x += tuk.speed*dt; if(tuk.x>cvs.width+220) tuk.x=-220;
-    let y = roadY() - tuk.h - 1;                       // วางเหนือเส้นแดง
-    y = Math.max(waterY()+6, Math.min(y, cvs.height - tuk.h)); // กันตกน้ำ
-    if(tukImg && tukImg._ok) ctx.drawImage(tukImg, tuk.x, y, tuk.w, tuk.h);
-  }
+ function drawRoadLine(){
+  const y = roadY();
+  ctx.strokeStyle='#ff4444';
+  ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
+}
+
+const tuk = { x:-220, w:140, h:90, speed:35 };
+function drawTuk(dt){
+  tuk.x += tuk.speed * dt;
+  if (tuk.x > cvs.width + 220) tuk.x = -220;
+
+  let y = roadY() - tuk.h - 2;          // เหนือเส้นแดงแน่ๆ
+  y = Math.max(waterY() + 6, y);        // กันจมน้ำ
+  if (tukImg && tukImg._ok) ctx.drawImage(tukImg, tuk.x, y, tuk.w, tuk.h);
+}
 
   // water
   let waveT=0,last=performance.now();
