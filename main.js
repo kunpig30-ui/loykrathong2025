@@ -207,10 +207,10 @@ document.getElementById('launch')?.addEventListener('click', async ()=>{
       const R=56*p.a;
       if(logoImg && logoImg.complete && logoImg.naturalWidth){ g.save(); g.globalAlpha=p.a; g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2); g.restore(); }
       else{ g.save(); g.globalAlpha=p.a; g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill(); g.lineWidth=6; g.strokeStyle='#e31f26'; g.beginPath(); g.arc(p.x,p.y,R-3,0,Math.PI*2); g.stroke(); g.restore(); }
-    }
+}
   }
 }
-
+const fireworks=[]; function spawnTriple(){ const w=canvas.width; [w*.25,w*.5,w*.75].forEach(x=>fireworks.push(new Firework(x))); } spawnTriple(); setInterval(spawnTriple,10000);
   // road & tuk (tuk อยู่เหนือเส้น ไม่ตกน้ำ)
 
 }
