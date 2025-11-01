@@ -1,11 +1,11 @@
 const CACHE_NAME = 'loykrathong-v3';
 const URLS = [
-  './', 'index.html', 'manifest.json',
+  './','index.html','manifest.json',
   'images/bg5.png','images/bg5mb.png',
   'images/kt1.png','images/kt2.png','images/kt3.png','images/kt4.png','images/kt5.png',
   'images/tuktuk.png','images/logo.png',
   'images/icon-192.png','images/icon-512.png'
-  // ไม่ cache audio เพื่อกันปัญหา 416
+  // ไม่ cache audio เพื่อกัน 416
 ];
 
 self.addEventListener('install', e => {
@@ -22,13 +22,12 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
 
-  // ถ้าเป็น Range request (เช่นไฟล์เสียง) -> network only
+  // Range request (เสียง/วิดีโอ) → network only
   if (req.headers && req.headers.get('range')) {
     e.respondWith(fetch(req));
     return;
   }
-
-  // โฟลเดอร์เสียง -> network-first (ไม่แคช)
+  // โฟลเดอร์เสียง → network-first (ไม่แคช)
   if (req.url.includes('/audio/')) {
     e.respondWith(fetch(req).catch(() => caches.match(req)));
     return;
@@ -38,8 +37,7 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(req).then(hit => {
       const fetchPromise = fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        caches.open(CACHE_NAME).then(c => c.put(req, res.clone()));
         return res;
       }).catch(() => hit || caches.match('images/bg5.png'));
       return hit || fetchPromise;
