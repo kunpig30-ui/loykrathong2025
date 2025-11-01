@@ -1,23 +1,35 @@
-/* v7: responsive anchors from bg image, fix init order, wish stays till exit, start-left, tuk on red line */
+/* v8: road aligned to background red line; mobile/desktop presets; live override via ?line= */
 (function(){
   const cvs = document.getElementById('scene');
   const ctx = cvs.getContext('2d');
   const header = document.querySelector('header');
   const bgEl = document.getElementById('bgLayer');
+  const params = new URLSearchParams(location.search);
 
-  // ---------- responsive anchors ----------
+  // ---------- responsive anchors (ปรับ roadPct ให้ตรงเส้นแดงในภาพ) ----------
   function getAnchors(){
+    const isPhone = matchMedia('(max-width:640px)').matches;
     const ar = innerHeight / Math.max(1, innerWidth);
-    // ค่าตั้งต้นให้ระดับน้ำสูง “ขึ้น” อีกนิดในเดสก์ท็อป (กันภาพจมน้ำ)
-    if (ar >= 1.95) return { waterPct: 82, roadPct: 93, tuk:{w:132,h:84,speed:36}, krSize:64 };
-    if (ar >= 1.35) return { waterPct: 81, roadPct: 93, tuk:{w:138,h:88,speed:35}, krSize:64 };
-    return               { waterPct: 78, roadPct: 92, tuk:{w:146,h:90,speed:34}, krSize:60 };
+
+    // ค่าที่จูนมาให้เส้นแดงในรูปตรงพอดีกับพื้นหลังจริง
+    // หมายเหตุ: ถ้าจอสูงมาก (ar>=1.9) ให้ยกน้ำสูงขึ้นนิดกันจมน้ำ
+    if (isPhone) {
+      return { waterPct: (ar>=1.9?81.5:81), roadPct: 96.4, roadShift: -1, tuk:{w:138,h:88,speed:35}, krSize:64 };
+    }
+    // เดสก์ท็อป
+    if (ar>=1.9) {
+      return { waterPct: 82, roadPct: 96.2, roadShift: -1, tuk:{w:132,h:84,speed:36}, krSize:64 };
+    }
+    return { waterPct: 79, roadPct: 96.0, roadShift: -1, tuk:{w:146,h:90,speed:34}, krSize:60 };
   }
   let anchors = getAnchors();
 
-  // y จากรูปพื้นหลัง เพื่อให้ตำแหน่งเสมอต้นเสมอปลายทุกซูม
+  // override ค่าจูนแบบสด ๆ : ?line=96.4  (เป็นเปอร์เซ็นต์ของความสูงรูป bg)
+  const lineOverride = parseFloat(params.get('line'));
+  if (!Number.isNaN(lineOverride)) anchors.roadPct = lineOverride;
+
+  // y จากรูปพื้นหลัง (ตำแหน่งเดียวกันทุกสเกล)
   function anchoredYFromBg(pct){
-    // ถ้าไม่มี bgEl ให้ใช้เปอร์เซ็นต์จาก canvas
     if (!bgEl) return Math.round(cvs.height * (pct/100));
     const br = bgEl.getBoundingClientRect();
     const cr = cvs.getBoundingClientRect();
@@ -25,9 +37,9 @@
     return Math.max(0, Math.min(Math.round(y), cvs.height));
   }
   const waterY = () => anchoredYFromBg(anchors.waterPct);
-  const roadY  = () => anchoredYFromBg(anchors.roadPct);
+  const roadY  = () => anchoredYFromBg(anchors.roadPct) + (anchors.roadShift||0);
 
-  // ประกาศ tuk ก่อนเรียก size() (แก้ Cannot access before initialization)
+  // ประกาศ tuk ก่อนเรียก size() (กัน hoist error)
   const tuk = { x:-220, w:anchors.tuk.w, h:anchors.tuk.h, speed:anchors.tuk.speed };
 
   // ---------- sizing ----------
@@ -36,15 +48,17 @@
     cvs.width  = innerWidth;
     cvs.height = Math.max(1, innerHeight - h);
     document.documentElement.style.setProperty('--hdr', h + 'px');
-    anchors = getAnchors();                // recalc
-    Object.assign(tuk, anchors.tuk);       // update tuk size/speed
+
+    anchors = getAnchors();
+    if (!Number.isNaN(lineOverride)) anchors.roadPct = lineOverride; // คงค่า override
+    Object.assign(tuk, anchors.tuk);
   }
   addEventListener('resize', ()=>requestAnimationFrame(size));
   addEventListener('orientationchange', size);
   size();
 
   // ---------- loader ----------
-  const V='?v=7';
+  const V='?v=8';
   function makeImg(path){
     const i=new Image();
     i.crossOrigin='anonymous';
@@ -87,10 +101,9 @@
   }
   renderWish();
 
-  // ---------- 5 lanes ----------
-  const LANES=5, STEP=14;
+  // ---------- lanes ----------
+  const STEP=14;
   function laneY(i){
-    // กันติดขอบล่าง: ไม่ให้ต่ำกว่า (canvas - krSize*0.9)
     return Math.min(waterY()+26 + i*STEP, cvs.height - anchors.krSize*0.9);
   }
 
@@ -98,22 +111,16 @@
     constructor(img,lane,offset){
       this.img=img; this.lane=lane;
       this.size = anchors.krSize;
-      this.x = -220 - offset;                         // เริ่มซ้ายและเหลื่อม
-      this.vx = rnd(22, 28) + lane*0.4;               // เลนต่างกันเล็กน้อย กันเกาะกลุ่ม
+      this.x = -220 - offset;                       // เริ่มจากซ้าย
+      this.vx = rnd(22, 28) + lane*0.4;
       this.phase=rnd(0,Math.PI*2); this.amp=2; this.freq=1.0; this.t=0;
-      this.text='';                                   // ไม่ใช้ timeout: แสดงจนออกขวา
+      this.text='';
     }
-    setWish(s){
-      this.text=(s||'').trim();
-      // ให้คำอธิษฐานเริ่มจากซ้ายเสมอ
-      this.x = Math.min(this.x, -140);
-    }
-    get y(){
-      return laneY(this.lane) + Math.sin(this.t*this.freq+this.phase)*this.amp;
-    }
+    setWish(s){ this.text=(s||'').trim(); this.x=Math.min(this.x,-140); }
+    get y(){ return laneY(this.lane) + Math.sin(this.t*this.freq+this.phase)*this.amp; }
     update(dt){
       this.t+=dt; this.x+=this.vx*dt;
-      if(this.x>cvs.width+160){ this.x=-160; this.text=''; } // หลุดขวาแล้วค่อยลบข้อความ
+      if(this.x>cvs.width+160){ this.x=-160; this.text=''; }
     }
     draw(g){
       const wy=waterY(), rx=this.size*.55, ry=6;
@@ -121,11 +128,8 @@
       grd.addColorStop(0,'rgba(0,0,0,.22)'); grd.addColorStop(1,'rgba(0,0,0,0)');
       g.fillStyle=grd; g.beginPath(); g.ellipse(this.x,wy,rx,ry,0,0,Math.PI*2); g.fill();
 
-      if(this.img && this.img._ok){
-        g.drawImage(this.img, this.x-this.size/2, this.y-this.size/2, this.size, this.size);
-      }else{
-        g.fillStyle='#27ae60'; g.beginPath(); g.arc(this.x,this.y,this.size/2,0,Math.PI*2); g.fill();
-      }
+      if(this.img && this.img._ok) g.drawImage(this.img, this.x-this.size/2, this.y-this.size/2, this.size, this.size);
+      else { g.fillStyle='#27ae60'; g.beginPath(); g.arc(this.x,this.y,this.size/2,0,Math.PI*2); g.fill(); }
 
       if(this.text){
         const msg = clip(this.text, (innerWidth<=420)?18:22);
@@ -144,7 +148,7 @@
   function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
   function clip(s,m){ s=String(s||""); return s.length>m? s.slice(0,m-1)+'…' : s; }
 
-  const boats = krImgs.map((im,i)=> new Krathong(im, i, i*120));
+  const boats = ['kt1','kt2','kt3','kt4','kt5'].map((_,i)=> new Krathong(krImgs[i], i, i*120));
   let nextIdx=0;
 
   // ---------- launch ----------
@@ -153,18 +157,13 @@
   function showToast(){ toast?.classList.add('show'); setTimeout(()=>toast?.classList.remove('show'),700); }
   document.getElementById('launch')?.addEventListener('click', ()=>{
     const t=(wishEl?.value||'').trim();
-    if(t){
-      const b = boats[nextIdx];
-      b.setWish(t);
-      nextIdx=(nextIdx+1)%boats.length;
-    }
+    if(t){ const b=boats[nextIdx]; b.setWish(t); nextIdx=(nextIdx+1)%boats.length; }
     if(wishEl) wishEl.value='';
     bump(); pushWish(t); showToast();
     try{ if(bgm && bgm.paused){ bgm.load(); bgm.play(); } }catch{}
   });
 
-  // ---------- fireworks: logo + 3 จุด ----------
-  const rndf = (w)=>[w*.22,w*.50,w*.78];
+  // ---------- fireworks ----------
   class Firework{
     constructor(x){ this.x=x; this.y=waterY(); this.vy=-240; this.state='rise'; this.parts=[]; }
     update(dt){
@@ -178,26 +177,25 @@
     draw(g){
       if(this.state==='rise'){ g.strokeStyle='rgba(255,220,120,.9)'; g.beginPath(); g.moveTo(this.x,this.y+16); g.lineTo(this.x,this.y); g.stroke(); }
       for(const p of this.parts){ const R=56*p.a; g.save(); g.globalAlpha=p.a;
-        if(logoImg && logoImg._ok) g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2);
-        else { g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill(); }
+        if(logoImg && logoImg._ok) g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2); else { g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill(); }
         g.restore();
       }
     }
   }
   const fireworks=[];
-  function spawnTriple(){
-    const xs = rndf(cvs.width);
-    xs.forEach(x=>fireworks.push(new Firework(x)));
-  }
+  function spawnTriple(){ const w=cvs.width; [w*.22,w*.50,w*.78].forEach(x=>fireworks.push(new Firework(x))); }
   setTimeout(spawnTriple, 2500); setInterval(spawnTriple, 12000);
 
   // ---------- tuk & road ----------
   function drawRoadLine(){
-    const y=roadY(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
+    // เส้น debug ให้ตรงกับเส้นแดงในรูป (สามารถปิดได้ถ้าไม่อยากแสดง)
+    const y=roadY(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
   }
   function drawTuk(dt){
     tuk.x+=tuk.speed*dt; if(tuk.x>cvs.width+220) tuk.x=-220;
-    const y=Math.min(roadY()-tuk.h, cvs.height - tuk.h); // กันตกน้ำ/ล่าง
+    // อยู่บนเส้นถนนเสมอ และไม่ต่ำกว่าน้ำ
+    const y = Math.max(waterY()+6, Math.min(roadY()-tuk.h, cvs.height - tuk.h));
     if(tukImg && tukImg._ok) ctx.drawImage(tukImg,tuk.x,y,tuk.w,tuk.h);
   }
 
