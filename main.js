@@ -16,7 +16,6 @@ const BUBBLE_PADY = 0.9;   // ฟองคำอธิษฐานห่าง�
 const KR_SIZE     = 60;    // ขนาดกระทง
 
 // ยกภาพพื้นหลังจริง (img#bgLayer)
-const bgEl = document.getElementById('bgLayer');
 if (bgEl) {
   bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
 }
@@ -165,7 +164,7 @@ function laneY(i){
   }
 }
 
- // สร้าง 5 ใบ คนละเลน + offset ให้ไม่เกาะกลุ่ม
+// สร้าง 5 ใบ คนละเลน + offset ให้ไม่เกาะกลุ่ม
 const boats = krImgs.map((im,i)=> new Krathong(im, i % LANES, i*120));
 let nextIdx = 0;
 
@@ -193,6 +192,7 @@ document.getElementById('launch')?.addEventListener('click', async ()=>{
     setTimeout(()=>{ const b=document.getElementById('launch'); if(b) b.disabled=false; }, 500);
   }
 });
+
   // fireworks (3 จุด โลโก้)
   class Firework{
     constructor(x){ this.x=x; this.y=waterY(); this.vy=-240; this.state='rise'; this.parts=[]; }
@@ -214,15 +214,9 @@ document.getElementById('launch')?.addEventListener('click', async ()=>{
   setTimeout(spawnTriple,2500); setInterval(spawnTriple,12000);
 
   // road & tuk (tuk อยู่เหนือเส้น ไม่ตกน้ำ)
-  const tuk={x:-220,w:140,h:90,speed:35};
- function drawRoadLine(){
-  const y = roadY();
-  ctx.strokeStyle='#ff4444';
-  ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
+
 }
 
-const tuk = { x:-220, w:140, h:90, speed:35 };
 function drawRoadLine(){
   const y = roadY();
   ctx.strokeStyle='#ff4444';
@@ -234,12 +228,10 @@ const tuk = { x:-220, w:140, h:90, speed:35 };
 function drawTuk(dt){
   tuk.x += tuk.speed * dt;
   if (tuk.x > cvs.width + 220) tuk.x = -220;
-
-  let y = roadY() - tuk.h - 2;          // เหนือเส้นแดงแน่ๆ
-  y = Math.max(waterY() + 6, y);        // กันจมน้ำ
+  let y = roadY() - tuk.h - 2;
+  y = Math.max(waterY() + 6, y);
   if (tukImg && tukImg._ok) ctx.drawImage(tukImg, tuk.x, y, tuk.w, tuk.h);
 }
-
   // water
   let waveT=0,last=performance.now();
   function drawWater(){
