@@ -8,11 +8,11 @@
   const IS_MOBILE = matchMedia('(max-width:640px)').matches;
 
   // ======== TUNE ME (จูนเร็ว) ========
-  const BG_DY   = -8;  // ยก anchor ทั้งชุดขึ้น/ลงจากภาพพื้นหลัง (+ลง / -ขึ้น)
-  const ROAD_DY =  0;  // ขยับเส้นถนนแดงเล็กน้อย (+ขึ้น / -ลง) เพื่อให้ตรงตา
-  const LANE_STEP = 14;  // ระยะห่างเลน
-  const LANE_SURFACE_LIFT = 5; // ยกกระทงขึ้นจากผิวน้ำ (กันติดขอบล่าง)
-  const LANE_MAX_BELOW_ROAD = 4; // ห้ามกระทงสูงจนชนเส้นแดง
+  const BG_DY   = -2;   // เดิม -8  → ยก anchor ทั้งภาพขึ้นน้อยลง
+  const ROAD_DY = +22;  // เดิม  0   → ดันเส้นถนนแดงลง (ทำให้ตุ๊กอยู่เหนือเส้น ไม่จมน้ำ)
+  const LANE_STEP = 14; // คงเดิม
+  const LANE_SURFACE_LIFT = 16; // เดิม 10 → ยกกระทงขึ้นจากผิวน้ำอีกนิด (ไม่ติดขอบ)
+  const LANE_MAX_BELOW_ROAD = 14; // เดิม 8 → เผื่อระยะใต้เส้นแดงเพิ่ม (กันทับเส้น)
   // ===================================
 
   function size() {
