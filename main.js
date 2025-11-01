@@ -4,7 +4,6 @@
 const cvs = document.getElementById('scene');
 const ctx = cvs.getContext('2d');
 const header = document.querySelector('header');
-const bgEl = document.getElementById('bgLayer'); // <— เหลือบรรทัดนี้บรรทัดเดียว
 const IS_MOBILE = matchMedia('(max-width:640px)').matches;
 
 // ========= QUICK TUNE =========
