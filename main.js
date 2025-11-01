@@ -1,20 +1,38 @@
-/* v5: image loader robust, 5 lanes (no collision), wish 10s, logo fireworks, tuk on red line, audio error log */
+/* v6: responsive anchors (water/road/tuk/krSize), mobile friendly */
+/* image loader robust, 5 lanes (no collision), wish 10s, logo fireworks, tuk on red line, audio error log */
 (function(){
   const cvs = document.getElementById('scene');
   const ctx = cvs.getContext('2d');
   const header = document.querySelector('header');
 
+  // === sizing ===
   function size(){
     const h = header ? header.offsetHeight : 0;
     cvs.width = innerWidth;
     cvs.height = Math.max(1, innerHeight - h);
     document.documentElement.style.setProperty('--hdr', h + 'px');
+    // ทุกครั้งที่ไซส์เปลี่ยน ให้รีคอมพิวต์ anchor และอัปเดตตุ๊ก
+    anchors = getAnchors();
+    Object.assign(tuk, anchors.tuk); // อัปเดตขนาด/ความเร็วตุ๊กให้ตามอุปกรณ์
   }
   addEventListener('resize', ()=>requestAnimationFrame(size));
   addEventListener('orientationchange', size);
+
+  // === responsive anchors ==========================
+  // ปรับระดับน้ำ/ถนน + ขนาดตุ๊ก/กระทง ตามอัตราส่วนจอ (แนวตั้ง/แนวนอน)
+  function getAnchors(){
+    const ar = innerHeight / Math.max(1, innerWidth); // aspect ratio
+    // ค่าเหล่านี้จูนมาให้เข้ากับภาพ bg5/bg5mb และ object-fit:cover (มือถือ) / contain (เดสก์ท็อป)
+    if (ar >= 1.95) return { waterPct: 84, roadPct: 95, tuk:{w:132,h:84,speed:36}, krSize:64 }; // จอสูงมาก
+    if (ar >= 1.35) return { waterPct: 83, roadPct: 95, tuk:{w:138,h:88,speed:35}, krSize:64 }; // มือถือส่วนใหญ่
+    return               { waterPct: 80, roadPct: 94, tuk:{w:146,h:90,speed:34}, krSize:60 };   // จอกว้าง/แท็บเล็ต
+  }
+  let anchors = getAnchors();
+
   size();
 
-  const V='?v=5';
+  // === assets loader ===
+  const V='?v=6';
   function makeImg(path){
     const i=new Image();
     i.crossOrigin='anonymous';
@@ -25,7 +43,6 @@
     return i;
   }
 
-  // assets
   const tukImg = makeImg('images/tuktuk.png');
   const logoImg = makeImg('images/logo.png');
   const krImgs = ['kt1.png','kt2.png','kt3.png','kt4.png','kt5.png'].map(n=>makeImg('images/'+n));
@@ -34,8 +51,10 @@
   const bgm = document.getElementById('bgm');
   bgm?.addEventListener('error', e=>console.warn('audio error', e));
 
-  const waterY = () => Math.round(cvs.height*0.80);
-  const roadY = () => waterY()+2;
+  // ใช้เปอร์เซ็นต์จาก anchors ให้ฟิตทุกจอ
+  const waterY = () => Math.round(cvs.height * (anchors.waterPct/100));
+  const roadY  = () => Math.round(cvs.height * (anchors.roadPct/100));
+
   const rnd = (a,b)=>Math.random()*(b-a)+a;
 
   // storage/stat
@@ -67,8 +86,9 @@
 
   class Krathong{
     constructor(img,lane,offset){
-      this.img=img; this.lane=lane; this.size=60;
-      this.x = -220 - offset;                // เริ่มเหลื่อมกัน ไม่เกาะกลุ่ม
+      this.img=img; this.lane=lane;
+      this.size = anchors.krSize;                    // ขนาดยืดหยุ่น
+      this.x = -220 - offset;                        // เริ่มเหลื่อมกัน ไม่เกาะกลุ่ม
       this.vx = rnd(22, 28);
       this.phase=rnd(0,Math.PI*2); this.amp=2; this.freq=1.0; this.t=0;
       this.text=''; this.textT=0;
@@ -77,7 +97,7 @@
     get y(){ return laneY(this.lane) + Math.sin(this.t*this.freq+this.phase)*this.amp; }
     update(dt){
       this.t+=dt; this.x+=this.vx*dt;
-      if(this.x>cvs.width+160) this.x=-160;   // วนไปซ้ายใหม่
+      if(this.x>cvs.width+160) this.x=-160;          // วนไปซ้ายใหม่
     }
     draw(g){
       const wy=waterY(), rx=this.size*.55, ry=6;
@@ -146,10 +166,14 @@
   function spawnTriple(){ const w=cvs.width; [w*.22,w*.50,w*.78].forEach(x=>fireworks.push(new Firework(x))); }
   setTimeout(spawnTriple, 2500); setInterval(spawnTriple, 12000);
 
-  // เส้นแดง + ตุ๊ก
-  const tuk={x:-220,w:140,h:90,speed:35};
+  // เส้นแดง + ตุ๊ก (ยึด anchors.tuk)
+  const tuk={x:-220,w:anchors.tuk.w,h:anchors.tuk.h,speed:anchors.tuk.speed};
   function drawRoadLine(){ const y=roadY(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke(); }
-  function drawTuk(dt){ tuk.x+=tuk.speed*dt; if(tuk.x>cvs.width+220) tuk.x=-220; const y=roadY()-tuk.h; if(tukImg && tukImg._ok) ctx.drawImage(tukImg,tuk.x,y,tuk.w,tuk.h); }
+  function drawTuk(dt){
+    tuk.x+=tuk.speed*dt; if(tuk.x>cvs.width+220) tuk.x=-220;
+    const y=roadY()-tuk.h;
+    if(tukImg && tukImg._ok) ctx.drawImage(tukImg,tuk.x,y,tuk.w,tuk.h);
+  }
 
   // น้ำ
   let waveT=0,last=performance.now();
