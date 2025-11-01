@@ -17,6 +17,7 @@
   .good{background:#104529;border-color:#1b7d4e}
   .bad{background:#0b61d3;border-color:#0e96ca}
 
+  /* ฉาก */
   #stage,#scene{position:fixed;left:0;right:0;top:var(--hdr);bottom:0}
   #stage{z-index:0;display:grid;place-items:center;overflow:hidden}
   #scene{z-index:1;touch-action:manipulation}
@@ -26,7 +27,7 @@
   .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
   #splash.hide{opacity:0;pointer-events:none;transition:.35s;display:none}
 
-  /* ซ่อนเมนูด้านล่าง */
+  /* ซ่อนเมนูล่าง */
   #mobileBar{display:none !important}
 
   #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
@@ -53,22 +54,17 @@
 <!-- พื้นหลัง -->
 <div id="stage">
   <img id="bgLayer"
-       src="images/bg5.png?v=2025-11-01"
-       srcset="images/bg5mb.png?v=2025-11-01 640w, images/bg5.png?v=2025-11-01 1280w"
+       src="images/bg5.png?v=4"
+       srcset="images/bg5mb.png?v=4 640w, images/bg5.png?v=4 1280w"
        sizes="100vw"
-       alt="background">
+       alt="background"
+       onerror="this.style.opacity='.15';console.warn('BG not found:',this.currentSrc)">
 </div>
 <canvas id="scene"></canvas>
 
 <div id="toast" role="status" aria-live="polite">ปล่อยแล้ว 🎋</div>
 
-<!-- เก็บ element แต่อย่าแสดง -->
-<div id="mobileBar" aria-hidden="true">
-  <button id="tapLaunch" class="btn good">ปล่อยกระทง</button>
-  <button id="tapMusicMb" class="btn">▶/⏸ เพลง</button>
-</div>
-
-<audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
+<audio id="bgm" preload="metadata" src="audio/song.mp3"></audio>
 
 <div id="splash">
   <div class="card">
@@ -82,7 +78,7 @@
   <ul id="wishList"></ul>
 </section>
 
-<script src="main.js?v=2025-11-01"></script>
+<script src="main.js?v=4"></script>
 <script>
   // อนุญาตเล่นเพลงหลังแตะ
   (function(){
@@ -98,14 +94,13 @@
 
   // SW
   if('serviceWorker' in navigator){
-    addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); });
+    addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js?v=4').catch(()=>{}); });
   }
 
   // ปุ่มเพลงบนหัว
   const tapMusic=document.getElementById('tapMusic');
   const bgm=document.getElementById('bgm');
-  function toggleMusic(){ if(bgm.paused){ try{bgm.play();}catch{} } else { bgm.pause(); } }
-  tapMusic?.addEventListener('click', toggleMusic);
+  tapMusic?.addEventListener('click', ()=>{ if(bgm.paused){ bgm.play().catch(()=>{}); } else { bgm.pause(); }});
 </script>
 </body>
 </html>
