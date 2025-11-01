@@ -1,108 +1,122 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0b1220">
-  <link rel="icon" href="images/icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="images/icon-512.png">
+<style>
+  :root{
+    --hdr: 72px;
+    --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0;
+  }
+  body{margin:0;height:100%;background:#061018;color:#fff;font-family:system-ui,"TH Sarabun New",Prompt,sans-serif}
+  header{position:fixed;inset:0 0 auto 0;z-index:10;padding:20px;background:linear-gradient(180deg,#061018 0%,#061827 100%)}
+  h1{font-size:18px;margin:0}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .pill{background:#ff0000;border:2px solid #e87575;padding:10px;border-radius:12px}
+  .btn{background:#0f1c33;border:2px solid #28508a;border-radius:12px;color:#e9f0ff;padding:10px;cursor:pointer;font-size:16px}
+  .btn:active{transform:translateY(1px)}
+  .good{background:#104529;border-color:#1b7d4e}
+  .bad{background:#0b61d3;border-color:#0e96ca}
 
-  <style>
-    :root{
-      --hdr:72px;
-      --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0;
-      --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
-    }
-    html,body{margin:0;height:100%;background:#061018;color:#fff;font-family:system-ui,"TH Sarabun New",Prompt,sans-serif;overflow:hidden}
-    header{position:fixed;inset:0 0 auto 0;z-index:10;padding:max(12px,14px + var(--safe-top)) 16px;background:linear-gradient(180deg,#061018 0%,#061827 100%)}
-    h1{font-size:18px;margin:0}
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    .pill{background:#ff0000;border:2px solid #e87575;padding:10px 12px;border-radius:12px;line-height:1}
-    .btn{background:#0f1c33;border:2px solid #28508a;border-radius:12px;color:#e9f0ff;padding:12px 14px;cursor:pointer;font-size:16px;line-height:1;min-height:44px}
-    .btn:active{transform:translateY(1px)}
-    .good{background:#104529;border-color:#1b7d4e}
-    .bad{background:#0b61d3;border-color:#0e96ca}
-    #wish{flex:1 1 240px;min-width:180px;max-width:720px;outline:none;appearance:none}
+  /* พื้นหลังและแคนวาส */
+  #stage,#scene{position:fixed;left:0;right:0;top:var(--hdr);bottom:0}
+  #stage{z-index:0;display:grid;place-items:center;overflow:hidden}
+  #scene{z-index:1;touch-action:manipulation}
+  #bgLayer{width:100%;height:100%;object-fit:contain;object-position:center}
 
-    /* เวที + แคนวาส */
-    #stage,#scene{position:fixed;left:0;right:0;top:var(--hdr);bottom:0}
-    #stage{z-index:0;overflow:hidden;display:grid;place-items:center}
-    #bgLayer{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
-    #scene{z-index:1;touch-action:manipulation}
+  /* splash / mobile bar / toast */
+  #splash{position:fixed;inset:0;background:rgba(3,7,14,.85);display:grid;place-items:center;z-index:20}
+  .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
+  #splash.hide{opacity:0;pointer-events:none;transition:.35s;display:none}
 
-    /* toast + mobile bar */
-    #toast{position:fixed;left:50%;bottom:calc(86px + var(--safe-bottom));transform:translateX(-50%);background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
-    #toast.show{opacity:.96}
-    #mobileBar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;background:linear-gradient(180deg,rgba(6,16,24,0),rgba(6,16,24,.8))}
-
-    /* splash */
-    #splash{position:fixed;inset:0;background:rgba(3,7,14,.85);display:grid;place-items:center;z-index:20}
-    .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
-    #splash.hide{opacity:0;pointer-events:none;transition:.35s;display:none}
-
-    @media (max-width:640px){ h1{font-size:16px} .row{gap:8px} }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="row"><h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1></div>
-    <div class="row" style="margin-top:12px">
-      <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
-      <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
-      <button id="exportStat" class="btn bad">⬇️ CSV สถิติ</button>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <input id="wish" class="btn good" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด >">
-      <button id="launch" class="btn good">ปล่อย</button>
-    </div>
-  </header>
-
-  <!-- พื้นหลังแบบรูปภาพ (เลือกภาพตามขนาดหน้าจอ) -->
-  <div id="stage">
-    <img id="bgLayer"
-         src="images/bg5.png"
-         srcset="images/bg5mb.png 1080w, images/bg5.png 1920w"
-         sizes="100vw"
-         alt="background" decoding="async" loading="eager">
-  </div>
-
-
-  <link rel="manifest" href="manifest.json">
-  <audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
-  
-  <!-- ฉากหลัก -->
-  <canvas id="scene"></canvas>
-
-  <!-- ปุ่มล่างเฉพาะมือถือ (ไม่ซ้ำกับส่วนอื่นแล้ว) -->
-  <div id="mobileBar">
-    <button id="tapLaunch" class="btn good">ปล่อยกระทง</button>
-    <button id="tapMusicMb" class="btn">▶/⏸ เพลง</button>
-  </div>
-
-  <!-- สถานะ -->
-  <div id="toast" role="status" aria-live="polite">ปล่อยแล้ว 🎋</div>
-  <audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
-
-  <!-- Splash -->
-  <div id="splash">
-    <div class="card">
-      <h1>แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
-      <p class="muted"><span id="loadInfo">กำลังเตรียมฉาก…</span> • หากเพลงไม่ดัง ให้กด ▶ เล่นเพลง</p>
-      <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
-    </div>
-  </div>
-
-  <section style="position:fixed;left:10px;bottom:10px;right:10px;z-index:9;color:#bbccdd;pointer-events:none;">
-    <ul id="wishList"></ul>
-  </section>
-
-  <!-- เกมหลัก -->
-  <script src="main.js" defer></script>
-  <style>
+  /* ซ่อนแถบล่างตามที่ขอ */
   #mobileBar{display:none !important}
+  #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
+  #toast.show{opacity:.96}
+
+  @media (max-width:640px){
+    header h1{font-size:16px}
+  }
 </style>
+</head>
+
+<body>
+<header>
+  <div class="row"><h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1></div>
+  <div class="row" style="margin-top:30px">
+    <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
+    <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
+    <button id="exportStat" class="btn bad">⬇️ CSV สถิติ</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input id="wish" class="btn good" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด >">
+    <button id="launch" class="btn good">ปล่อย</button>
+  </div>
+</header>
+
+<!-- พื้นหลัง: ใช้ภาพในโฟลเดอร์ images + srcset มือถือ -->
+<div id="stage">
+  <img
+    id="bgLayer"
+    src="images/bg5.png?v=2025-11-01"
+    srcset="images/bg5mb.png?v=2025-11-01 640w, images/bg5.png?v=2025-11-01 1280w"
+    sizes="100vw"
+    alt="background">
+</div>
+<canvas id="scene"></canvas>
+
+<div id="toast" role="status" aria-live="polite">ปล่อยแล้ว 🎋</div>
+
+<!-- ไม่แสดงแถบล่างแล้ว แต่เก็บ element ไว้ได้ -->
+<div id="mobileBar" aria-hidden="true">
+  <button id="tapLaunch" class="btn good">ปล่อยกระทง</button>
+  <button id="tapMusicMb" class="btn">▶/⏸ เพลง</button>
+</div>
+
+<!-- เสียง: path เป็น audio/song.mp3 -->
+<audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
+
+<div id="splash">
+  <div class="card">
+    <h1>แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
+    <p class="muted"><span id="loadInfo">กำลังเตรียมฉาก…</span> • หากเพลงไม่ดัง ให้กด ▶ เล่นเพลง</p>
+    <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
+  </div>
+</div>
+
+<section style="position:fixed;left:10px;bottom:10px;right:10px;z-index:9;color:#bbccdd;pointer-events:none;">
+  <ul id="wishList"></ul>
+</section>
+
+<!-- main -->
+<script src="main.js?v=2025-11-01"></script>
+<script>
+  /* อนุญาตเล่นเพลงหลังแตะ */
+  (function(){
+    const splash = document.getElementById('splash');
+    const startBtn = document.getElementById('startBtn');
+    const bgm = document.getElementById('bgm');
+    function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
+    function hide(){ splash?.classList.add('hide'); setTimeout(()=>splash?.remove(), 600); }
+    function begin(){ hide(); safePlay(); }
+    startBtn?.addEventListener('click', begin, {once:true});
+    splash?.addEventListener('pointerdown', begin, {once:true});
+  })();
+
+  /* register SW */
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    });
+  }
+
+  /* ปุ่มเล่น/หยุดเพลงบนหัว */
+  const tapMusic = document.getElementById('tapMusic');
+  const bgm = document.getElementById('bgm');
+  function toggleMusic(){ if(bgm.paused){ try{bgm.play();}catch{} } else { bgm.pause(); } }
+  tapMusic?.addEventListener('click', toggleMusic);
+</script>
 </body>
 </html>
