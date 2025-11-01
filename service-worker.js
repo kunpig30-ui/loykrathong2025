@@ -1,12 +1,12 @@
-// v4: simplify, fix "Response body used", bypass audio & range
-const CACHE = 'loykrathong-v4';
+// v5: cache safe, bypass audio/range
+const CACHE = 'loykrathong-v5';
 const ASSETS = [
   './','index.html','manifest.json',
   'images/bg5.png','images/bg5mb.png',
   'images/kt1.png','images/kt2.png','images/kt3.png','images/kt4.png','images/kt5.png',
   'images/tuktuk.png','images/logo.png',
   'images/icon-192.png','images/icon-512.png',
-  'main.js?v=4'
+  'main.js?v=5'
 ];
 
 self.addEventListener('install', e=>{
@@ -17,16 +17,13 @@ self.addEventListener('activate', e=>{
 });
 self.addEventListener('fetch', e=>{
   const req=e.request;
-  // bypass range & audio
+  const url=new URL(req.url);
   if (req.headers.get('range')) { e.respondWith(fetch(req)); return; }
-  if (new URL(req.url).pathname.startsWith('/loykrathong2025/audio/')) {
-    e.respondWith(fetch(req)); return;
-  }
-  // stale-while-revalidate (ปลอดภัยกับ clone)
+  if (url.pathname.startsWith('/loykrathong2025/audio/')) { e.respondWith(fetch(req)); return; }
   e.respondWith(
     caches.match(req).then(hit=>{
       const net=fetch(req).then(res=>{
-        if(res.ok && res.type==='basic'){ const put=res.clone(); caches.open(CACHE).then(c=>c.put(req,put)).catch(()=>{}); }
+        if(res.ok && res.type==='basic'){ caches.open(CACHE).then(c=>c.put(req,res.clone())).catch(()=>{}); }
         return res;
       }).catch(()=>hit || caches.match('images/bg5.png'));
       return hit || net;
