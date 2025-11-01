@@ -8,12 +8,12 @@
   const IS_MOBILE = matchMedia('(max-width:640px)').matches;
 
   // ======== TUNE ME (จูนเร็ว) ========
-  const BG_DY   = -2;   // เดิม -8  → ยก anchor ทั้งภาพขึ้นน้อยลง
-  const ROAD_DY = +22;  // เดิม  0   → ดันเส้นถนนแดงลง (ทำให้ตุ๊กอยู่เหนือเส้น ไม่จมน้ำ)
-  const LANE_STEP = 14; // คงเดิม
-  const LANE_SURFACE_LIFT = 16; // เดิม 10 → ยกกระทงขึ้นจากผิวน้ำอีกนิด (ไม่ติดขอบ)
-  const LANE_MAX_BELOW_ROAD = 14; // เดิม 8 → เผื่อระยะใต้เส้นแดงเพิ่ม (กันทับเส้น)
-  // ===================================
+const BG_DY   = -4;   // ยกพื้นหลังขึ้นเล็กน้อย
+const ROAD_DY = +18;  // ดันเส้นถนนลง
+const LANE_STEP = 14;
+const LANE_SURFACE_LIFT = 10;  // ผิวน้ำใกล้พื้นจริง
+const LANE_MAX_BELOW_ROAD = 16; // กันกระทงลอยสูงเกิน
+// ===================================
 
   function size() {
     const h = header ? header.offsetHeight : 0;
@@ -133,13 +133,38 @@
   const wishEl=document.getElementById('wish');
   const toast =document.getElementById('toast');
   function showToast(){ toast?.classList.add('show'); setTimeout(()=>toast?.classList.remove('show'),700); }
-  document.getElementById('launch')?.addEventListener('click', ()=>{
-    const t=(wishEl?.value||'').trim();
-    if(t){ boats[nextIdx].setWish(t); nextIdx=(nextIdx+1)%boats.length; }
-    if(wishEl) wishEl.value='';
-    bump(); pushWish(t); showToast();
-    try{ if(bgm && bgm.paused){ bgm.load(); bgm.play(); } }catch{}
-  });
+ document.getElementById('launch')?.addEventListener('click', async ()=>{
+  try {
+    // ป้องกัน double-click ค้าง
+    const btn = document.getElementById('launch');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+
+    const t = (wishEl?.value || '').trim();
+    if (t) {
+      boats[nextIdx].setWish(t);
+      nextIdx = (nextIdx + 1) % boats.length;
+    }
+    if (wishEl) wishEl.value = '';
+
+    bump();
+    pushWish(t);
+    showToast();
+
+    // ปรับ audio ให้ไม่โหลดซ้ำ
+    if (bgm && bgm.paused) {
+      bgm.currentTime = 0;
+      await bgm.play().catch(err => console.warn('BGM play fail', err));
+    }
+
+    // เปิด animation loop ต่อได้ปกติ
+    requestAnimationFrame(loop);
+  } catch (e) {
+    console.error('Launch error', e);
+  } finally {
+    setTimeout(()=>btn.disabled=false, 600); // ป้องกัน spam
+  }
+});
 
   // fireworks (3 จุด โลโก้)
   class Firework{
