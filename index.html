@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
-
 <style>
   :root{ --hdr:72px; --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0; }
   body{margin:0;height:100%;background:#061018;color:#fff;font-family:system-ui,"TH Sarabun New",Prompt,sans-serif}
@@ -17,7 +16,6 @@
   .good{background:#104529;border-color:#1b7d4e}
   .bad{background:#0b61d3;border-color:#0e96ca}
 
-  /* ฉาก */
   #stage,#scene{position:fixed;left:0;right:0;top:var(--hdr);bottom:0}
   #stage{z-index:0;display:grid;place-items:center;overflow:hidden}
   #scene{z-index:1;touch-action:manipulation}
@@ -27,16 +25,12 @@
   .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
   #splash.hide{opacity:0;pointer-events:none;transition:.35s;display:none}
 
-  /* ซ่อนเมนูล่าง */
   #mobileBar{display:none !important}
 
   #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
   #toast.show{opacity:.96}
-
-  @media (max-width:640px){ header h1{font-size:16px} }
 </style>
 </head>
-
 <body>
 <header>
   <div class="row"><h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1></div>
@@ -51,12 +45,12 @@
   </div>
 </header>
 
-<!-- พื้นหลัง -->
 <div id="stage">
   <img id="bgLayer"
-       src="images/bg5.png?v=4"
-       srcset="images/bg5mb.png?v=4 640w, images/bg5.png?v=4 1280w"
+       src="images/bg5.png?v=5"
+       srcset="images/bg5mb.png?v=5 640w, images/bg5.png?v=5 1280w"
        sizes="100vw"
+       decoding="async"
        alt="background"
        onerror="this.style.opacity='.15';console.warn('BG not found:',this.currentSrc)">
 </div>
@@ -64,7 +58,10 @@
 
 <div id="toast" role="status" aria-live="polite">ปล่อยแล้ว 🎋</div>
 
-<audio id="bgm" preload="metadata" src="audio/song.mp3"></audio>
+<!-- เปลี่ยน <audio> ให้ชัดเจนเรื่องชนิดไฟล์ + ปิด preload -->
+<audio id="bgm" playsinline crossorigin="anonymous">
+  <source src="audio/song.mp3?v=5" type="audio/mpeg">
+</audio>
 
 <div id="splash">
   <div class="card">
@@ -78,29 +75,27 @@
   <ul id="wishList"></ul>
 </section>
 
-<script src="main.js?v=4"></script>
+<script src="main.js?v=5"></script>
 <script>
-  // อนุญาตเล่นเพลงหลังแตะ
   (function(){
     const splash=document.getElementById('splash');
     const startBtn=document.getElementById('startBtn');
     const bgm=document.getElementById('bgm');
-    function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
+    function safePlay(){ try{ bgm.load(); const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
     function hide(){ splash?.classList.add('hide'); setTimeout(()=>splash?.remove(),600); }
     function begin(){ hide(); safePlay(); }
     startBtn?.addEventListener('click', begin, {once:true});
     splash?.addEventListener('pointerdown', begin, {once:true});
   })();
 
-  // SW
   if('serviceWorker' in navigator){
-    addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js?v=4').catch(()=>{}); });
+    addEventListener('load', ()=>{ navigator.serviceWorker.register('service-worker.js?v=5').catch(()=>{}); });
   }
 
-  // ปุ่มเพลงบนหัว
-  const tapMusic=document.getElementById('tapMusic');
-  const bgm=document.getElementById('bgm');
-  tapMusic?.addEventListener('click', ()=>{ if(bgm.paused){ bgm.play().catch(()=>{}); } else { bgm.pause(); }});
+  document.getElementById('tapMusic')?.addEventListener('click', ()=>{
+    const bgm=document.getElementById('bgm');
+    if(bgm.paused){ bgm.load(); bgm.play().catch(()=>{}); } else { bgm.pause(); }
+  });
 </script>
 </body>
 </html>
