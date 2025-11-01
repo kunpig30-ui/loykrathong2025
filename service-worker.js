@@ -5,42 +5,40 @@ const URLS = [
   'images/kt1.png','images/kt2.png','images/kt3.png','images/kt4.png','images/kt5.png',
   'images/tuktuk.png','images/logo.png',
   'images/icon-192.png','images/icon-512.png'
-  // ไม่ cache audio เพื่อกัน 416
+  // audio ไม่ถูกแคช เพื่อกัน error 416
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(URLS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(URLS)).then(()=>self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(keys => Promise.all(keys.filter(k => k!==CACHE_NAME).map(k => caches.delete(k))))
+      .then(()=>self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
   const req = e.request;
 
-  // Range request (เสียง/วิดีโอ) → network only
+  // Range request (เช่นไฟล์เสียง) → network only
   if (req.headers && req.headers.get('range')) {
-    e.respondWith(fetch(req));
-    return;
+    e.respondWith(fetch(req)); return;
   }
-  // โฟลเดอร์เสียง → network-first (ไม่แคช)
+  // โฟลเดอร์เสียง → network-first ไม่แคช
   if (req.url.includes('/audio/')) {
-    e.respondWith(fetch(req).catch(() => caches.match(req)));
-    return;
+    e.respondWith(fetch(req).catch(()=>caches.match(req))); return;
   }
 
   // cache-first + update async
   e.respondWith(
-    caches.match(req).then(hit => {
-      const fetchPromise = fetch(req).then(res => {
-        caches.open(CACHE_NAME).then(c => c.put(req, res.clone()));
+    caches.match(req).then(hit=>{
+      const net = fetch(req).then(res=>{
+        caches.open(CACHE_NAME).then(c=>c.put(req, res.clone()));
         return res;
-      }).catch(() => hit || caches.match('images/bg5.png'));
-      return hit || fetchPromise;
+      }).catch(()=>hit || caches.match('images/bg5.png'));
+      return hit || net;
     })
   );
 });
