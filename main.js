@@ -195,23 +195,21 @@ document.getElementById('launch')?.addEventListener('click', async ()=>{
 
   // fireworks (3 จุด โลโก้)
   class Firework{
-    constructor(x){ this.x=x; this.y=waterY(); this.vy=-240; this.state='rise'; this.parts=[]; }
-    update(dt){
-      if(this.state==='rise'){ this.y+=this.vy*dt; this.vy+=110*dt; if(this.vy>=-10){ this.state='explode'; this.explode(); } }
-      else { for(const p of this.parts){ p.vx*=.99; p.vy+=70*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.a*=.985; } this.parts=this.parts.filter(p=>p.a>0.06); }
-    }
-    explode(){ const N=12; for(let i=0;i<N;i++){ const a=i/N*Math.PI*2, sp=100+rnd(0,50); this.parts.push({x:this.x,y:this.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,a:1}); } }
-    draw(g){
-      if(this.state==='rise'){ g.strokeStyle='rgba(255,220,120,.9)'; g.beginPath(); g.moveTo(this.x,this.y+16); g.lineTo(this.x,this.y); g.stroke(); }
-      for(const p of this.parts){ const R=56*p.a; g.save(); g.globalAlpha=p.a;
-        if(logoImg && logoImg._ok) g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2);
-        else{ g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill(); }
-        g.restore();
-      }
+   constructor(x){ this.x=x; this.y=waterY(); this.vy=-280; this.state='rise'; this.parts=[]; }
+  update(dt){
+    if(this.state==='rise'){ this.y+=this.vy*dt; this.vy+=140*dt; if(this.vy>=-10) this.explode(); }
+    else { for(const p of this.parts){ p.vx*=0.99; p.vy+=70*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.a*=0.985; } this.parts=this.parts.filter(p=>p.a>0.06); }
+  }
+  explode(){ this.state='explode'; for(let i=0;i<30;i++){ const a=i/30*Math.PI*2, sp=110+Math.random()*90; this.parts.push({x:this.x,y:this.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,a:1}); } }
+  draw(g){
+    if(this.state==='rise'){ g.strokeStyle='rgba(255,220,120,.9)'; g.beginPath(); g.moveTo(this.x,this.y+16); g.lineTo(this.x,this.y); g.stroke(); }
+    for(const p of this.parts){
+      const R=56*p.a;
+      if(logoImg && logoImg.complete && logoImg.naturalWidth){ g.save(); g.globalAlpha=p.a; g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2); g.restore(); }
+      else{ g.save(); g.globalAlpha=p.a; g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill(); g.lineWidth=6; g.strokeStyle='#e31f26'; g.beginPath(); g.arc(p.x,p.y,R-3,0,Math.PI*2); g.stroke(); g.restore(); }
     }
   }
-  const fireworks=[]; function spawnTriple(){ const w=cvs.width; [w*.22,w*.50,w*.78].forEach(x=>fireworks.push(new Firework(x))); }
-  setTimeout(spawnTriple,2500); setInterval(spawnTriple,12000);
+}
 
   // road & tuk (tuk อยู่เหนือเส้น ไม่ตกน้ำ)
 
