@@ -1,4 +1,17 @@
 /* v7.2 — fixed version: krathong float, fireworks, tuk, waves all working */
+// ========= QUICK TUNE =========
+const BG_SHIFT_PX = -34;  // ยกภาพพื้นหลังขึ้น (ติดลบ = ขึ้น) ลอง -34 ก่อน, ปรับทีละ 2 ได้
+const WATER_FACTOR = 0.76; // ผิวน้ำต่ำลง (เดิม 0.80) = พื้นหลังเห็นมากขึ้น, น้ำสูงขึ้น
+const ROAD_DY     = 14;    // เส้นแดงห่างผิวน้ำ ~14px (ปริ่ม ๆ คลื่น แก้ได้ 12–18 ตามชอบ)
+const LANES       = 5;
+const LANE_STEP   = 16;    // ระยะห่างเลน (ให้ใบไม่ชน)
+const BUBBLE_PADY = 0.9;
+const KR_SIZE     = 60;
+
+// ยกภาพพื้นหลังจริง (img#bgLayer)
+const bgEl = document.getElementById('bgLayer');
+if (bgEl) bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
+
 (function(){
   // === Base declarations ===
   const cvs = document.getElementById('scene');
@@ -39,7 +52,15 @@
     i.src=p+V;
     return i;
   };
-
+  /* พื้นหลังให้ยึดกับ viewport */
+   #bgLayer{
+  position: relative;   /* หรือ absolute ถ้าครอบด้วย container ก็ได้ */
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: translateY(var(--bg-shift, 0)); /* สำรอง */
+}
+  
   // === Assets ===
   const tukImg  = makeImg('images/tuktuk.png');
   const logoImg = makeImg('images/logo.png');
@@ -65,8 +86,13 @@
       cvs.height
     ));
   }
-  const waterY = ()=> Math.round(cvs.height * 0.80);
-  const roadY  = ()=> waterY() + ROAD_DY;
+ const waterY = () => Math.round(cvs.height * WATER_FACTOR);
+const roadY  = () => waterY() + ROAD_DY;
+
+function laneY(i){
+  // ให้ใบกระทงต่ำลง (เริ่มที่ +22 จะ “จม” ลงเล็กน้อย)
+  return waterY() + 22 + i * LANE_STEP;
+}
 
   // === Storage/stat ===
   const LS_COUNT="loy.count", LS_WQ="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
@@ -125,6 +151,13 @@
     }
   }
 
+  function pickNextBoat(){
+  // เลือกใบที่อยู่ “ทางซ้ายที่สุด” (x น้อยสุด) เพื่อให้ลำดับซ้าย→ขวา
+  let c = boats[0], min = boats[0].x;
+  for (const b of boats){ if (b.x < min){ min = b.x; c = b; } }
+  return c;
+}
+  
   // === Boats ===
   const boats=krImgs.map((im,i)=>new Krathong(im,i%LANES,i*120));
   let nextIdx=0;
@@ -133,17 +166,29 @@
   const toast=document.getElementById('toast');
   function showToast(){ toast?.classList.add('show'); setTimeout(()=>toast?.classList.remove('show'),700); }
 
-  document.getElementById('launch')?.addEventListener('click',async()=>{
-    try{
-      const btn=document.getElementById('launch'); if(!btn||btn.disabled)return;
-      btn.disabled=true;
-      const t=(wishEl?.value||'').trim();
-      if(t){ boats[nextIdx].setWish(t); nextIdx=(nextIdx+1)%boats.length; }
-      if(wishEl) wishEl.value='';
-      bump(); pushWish(t); showToast();
-      if(bgm && bgm.paused){ bgm.currentTime=0; await bgm.play().catch(()=>{}); }
-    } finally { setTimeout(()=>{ const b=document.getElementById('launch'); if(b) b.disabled=false; },500); }
-  });
+  document.getElementById('launch')?.addEventListener('click', async ()=>{
+  try{
+    const btn = document.getElementById('launch');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+
+    const t = (wishEl?.value || '').trim();
+    if (t) {
+      const b = pickNextBoat();   // ← ใช้ใบที่จะออกจากซ้ายก่อน
+      b.setWish(t);
+    }
+    if (wishEl) wishEl.value = '';
+
+    bump(); pushWish(t); showToast();
+
+    if (bgm && bgm.paused) {
+      bgm.currentTime = 0;
+      await bgm.play().catch(()=>{});
+    }
+  } finally {
+    setTimeout(()=>{ const b=document.getElementById('launch'); if(b) b.disabled=false; }, 500);
+  }
+});
 
   // === Fireworks ===
   class Firework{
