@@ -45,14 +45,19 @@
   </div>
 </header>
 
+<!-- ก่อน -->
+<!-- <div id="stage"><img id="bgLayer" src="images/bg5.png?v=5" ... ></div> -->
+
+<!-- หลัง -->
 <div id="stage">
-  <img id="bgLayer"
-       src="images/bg5.png?v=5"
-       srcset="images/bg5mb.png?v=5 640w, images/bg5.png?v=5 1280w"
-       sizes="100vw"
-       decoding="async"
-       alt="background"
-       onerror="this.style.opacity='.15';console.warn('BG not found:',this.currentSrc)">
+  <picture>
+    <source srcset="images/bg5mb.png?v=6" media="(max-width: 640px)">
+    <img id="bgLayer"
+         src="images/bg5.png?v=6"
+         alt="background"
+         decoding="async"
+         onerror="this.style.opacity='.15';console.warn('BG not found:',this.currentSrc)">
+  </picture>
 </div>
 <canvas id="scene"></canvas>
 
