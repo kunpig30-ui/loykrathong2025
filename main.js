@@ -223,6 +223,14 @@ document.getElementById('launch')?.addEventListener('click', async ()=>{
 }
 
 const tuk = { x:-220, w:140, h:90, speed:35 };
+function drawRoadLine(){
+  const y = roadY();
+  ctx.strokeStyle='#ff4444';
+  ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
+}
+
+const tuk = { x:-220, w:140, h:90, speed:35 };
 function drawTuk(dt){
   tuk.x += tuk.speed * dt;
   if (tuk.x > cvs.width + 220) tuk.x = -220;
