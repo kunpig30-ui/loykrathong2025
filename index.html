@@ -1,68 +1,68 @@
 <!doctype html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
-<link rel="icon" href="data:,"> <!-- กัน 404 -->
-<style>
-  :root{ --hdr:64px; --bg-shift:-24px; }
-  body{ margin:0; background:#071423; color:#e9f0ff; font:600 16px system-ui, 'TH Sarabun New', Prompt, sans-serif; }
-  header{ position:sticky; top:0; z-index:10; padding:.75rem 1rem; background:linear-gradient(#0c1f36,#08182a); }
-  header .row{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
-  button, input{ font:inherit; }
-  .btn{ padding:.5rem .9rem; border:0; border-radius:.6rem; cursor:pointer; }
-  .btn-red{ background:#e11d48; color:#fff; }
-  .btn-blue{ background:#2563eb; color:#fff; }
-  .btn-green{ background:#15803d; color:#fff; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+  <style>
+    :root{ --hdr: 0px; }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; background:#081522; color:#e9f0ff; font-family:system-ui,'TH Sarabun New',Prompt,sans-serif; }
+    header{ position:relative; z-index:5; padding:14px 12px 8px; background:linear-gradient(to bottom,rgba(3,12,24,.95),rgba(3,12,24,.85)); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .badge{ font-weight:700; padding:10px 16px; border-radius:12px; border:0; }
+    .b-red{ background:#e53935; color:#fff; }
+    .b-blue{ background:#1e88e5; color:#fff; }
+    .b-green{ background:#2e7d32; color:#fff; }
+    input#wish{ flex:1; min-width:180px; padding:10px 12px; border-radius:12px; border:0; outline:0; }
+    ul#wishList{ list-style:none; padding:8px 16px; margin:0; line-height:1.45; font-size:15px; }
+    .stage{ position:relative; z-index:1; }
+    canvas#scene{ display:block; width:100%; height:calc(100dvh - var(--hdr)); }
 
-/* พื้นหลังเป็นชั้นลอยด้านหลังเสมอ */
-#bg{
-  position: fixed;
-  top: var(--hdr);
-  left: 0;
-  width: 100%;
-  height: calc(100dvh - var(--hdr));
-  z-index: 0;                                /* อยู่ข้างล่าง */
-  background: url('images/bg5.png') top center / cover no-repeat;
-  transform: translateY(-24px);              /* ยกภาพขึ้นลดพื้นดำ – ปรับทีละ 2px ได้ */
-}
+    /* พื้นหลังชั้นล่าง (responsive) */
+    #bg{
+      position:fixed; left:0; top:var(--hdr);
+      width:100%; height:calc(100dvh - var(--hdr));
+      z-index:0;
+      background:url('images/bg5.png') top center / cover no-repeat;
+      transform:translateY(-28px); /* ยกขึ้นเพื่อลดพื้นดำด้านบน */
+    }
+    @media (max-width:640px){
+      #bg{ background-image:url('images/bg5mb.png'); transform:translateY(-38px); }
+    }
 
-/* มือถือใช้ภาพ bg5mb.png */
-@media (max-width: 640px){
-  #bg{ background-image: url('images/bg5mb.png'); transform: translateY(-36px); }
-}
-
-/* เวทีวาด (บนสุด) */
-.stage{ position: relative; z-index: 1; }
-canvas#scene{ display:block; width:100%; height:calc(100dvh - var(--hdr)); }
-  /* รายชื่ออธิษฐาน */
-  ul#wishList{ list-style:none; margin:.25rem 0 0 0; padding-left:1rem; }
-  ul#wishList li{ opacity:.9; }
-</style>
+    /* toast เล็กๆ เวลา “ปล่อยแล้ว” */
+    #toast{ position:fixed; left:50%; top:calc(var(--hdr) + 10px); translate:-50% 0; padding:10px 14px; background:#0e1726; border:1px solid rgba(255,255,255,.25); border-radius:14px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:9; }
+    #toast.show{ opacity:1; }
+  </style>
 </head>
 <body>
-<header>
-  <div class="row">
-    <button id="stat" class="btn btn-red">ลอยแล้ว <span id="statCount">0</span> ใบ</button>
-    <button id="toggleBgm" class="btn btn-blue">▶️⏸ เพลง</button>
-    <button id="exportStat" class="btn btn-blue">⬇️ CSV สถิติ</button>
-    <input id="wish" class="btn" style="flex:1; background:#10304f; color:#cfe6ff" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด">
-    <button id="launch" class="btn btn-green">ปล่อย</button>
+  <header>
+    <div class="row" style="margin-bottom:6px">
+      <button id="stat" class="badge b-red">ลอยแล้ว <span id="statCount">0</span> ใบ</button>
+      <button id="toggleMusic" class="badge b-blue">▶️/⏸ เพลง</button>
+      <button id="exportStat" class="badge b-blue">⬇️ CSV สถิติ</button>
+    </div>
+    <div class="row">
+      <input id="wish" placeholder="พิมพ์คำอธิษฐานของคุณ... แล้วกด ► ปล่อย" />
+      <button id="launch" class="badge b-green">ปล่อย</button>
+    </div>
+    <ul id="wishList"></ul>
+  </header>
+
+  <!-- พื้นหลัง (เลเยอร์ล่าง) -->
+  <div id="bg"></div>
+
+  <!-- เวทีสำหรับวาด -->
+  <div class="stage">
+    <canvas id="scene"></canvas>
   </div>
-  <ul id="wishList"></ul>
-</header>
 
-<!-- วางใต้ <header> ทันที -->
-<div id="bg"></div>
+  <!-- เพลง -->
+  <audio id="bgm" preload="auto" loop src="audio/song.mp3"></audio>
 
-<div class="stage">
-  <canvas id="scene"></canvas>
-</div>
-<div class="stage"><canvas id="scene"></canvas></div>
+  <div id="toast">ปล่อยแล้ว 🎆</div>
 
-<audio id="bgm" preload="auto" loop src="audio/song.mp3"></audio>
-
-<script src="main.js?v=11" defer></script>
+  <script src="main.js?v=12" defer></script>
 </body>
 </html>
