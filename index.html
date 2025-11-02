@@ -40,11 +40,32 @@
     #scene{ position:absolute; inset:0; width:100%; height:100%; }
 
     /* ========== BOTTOM (สถิติ + เพลง + CSV + รายชื่อ) ========== */
-    #bottomBar{
-      position:sticky; bottom:0; z-index:10;
-      background:rgba(6,12,20,.75);
-      border-top:1px solid rgba(255,255,255,.10);
-      backdrop-filter:blur(4px);
+    /* 1) bottomBar fixed = ไม่มีแถบเลื่อน */
+ #bottomBar{
+  position: fixed;       /* เดิม: sticky */
+  left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  background: rgba(6,12,20,.75);
+  border-top: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(4px);
+}
+
+/* 2) ให้เวทีไม่ถูก bottomBar บัง: กันไว้เล็กน้อย */
+#stage{ height: calc(100vh - var(--hdr) - 56px); } /* 56px ≈ ความสูงแถบล่าง */
+
+/* 3) พื้นหลังให้เห็นครบ ไม่ซูมเกิน + ยกขึ้นนิด */
+#bgLayer{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit: contain;          /* เดิม: cover → บางเครื่อง “ใหญ่ไป/จมน้ำ” */
+  object-position: center top;
+  transform: translateY(var(--bg-shift, -18px)); /* ยกขึ้นเล็กน้อย */
+  user-select:none; -webkit-user-drag:none;
+}
+@media (max-width:640px){
+  #bgLayer{ transform: translateY(var(--bg-shift, -24px)); }
+}
     }
     #bottomInner{
       max-width:980px; margin:0 auto; padding:8px 10px;
