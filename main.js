@@ -2,23 +2,19 @@
 
 (() => {
   // ---------- DOM ----------
-  const cvs = document.getElementById('scene');
-  const ctx = cvs.getContext('2d');
-  const header = document.querySelector('header');
-  const bg = document.getElementById('bgLayer');
-  const ROAD_OFFSET   = 2;    // เส้นแดงสูงกว่า/ต่ำกว่าผิวน้ำกี่พิกเซล (+ลง, -ขึ้น)
-  const elWish = document.getElementById('wish');
-  const elLaunch = document.getElementById('launch');
-  const elStat = document.getElementById('statCount');
-  const elFeed = document.getElementById('feed');
-  const toast = document.getElementById('toast');
+ const cvs = document.getElementById('scene');
+const ctx = cvs.getContext('2d');
+const header = document.querySelector('header');
 
-  const bgm = document.getElementById('bgm');
-  document.getElementById('music').onclick = async () => {
-    try{
-      if (bgm.paused){ await bgm.play(); } else { bgm.pause(); }
-    }catch{}
-  };
+function size(){
+  const h = header?.offsetHeight || 0;
+  cvs.width  = innerWidth;
+  cvs.height = Math.max(1, (visualViewport?.height || innerHeight) - h);
+  document.documentElement.style.setProperty('--hdr', h + 'px');
+}
+addEventListener('resize', ()=>requestAnimationFrame(size));
+addEventListener('orientationchange', size);
+size();
 
   // ---------- CONFIG ----------
   const MAX_BOATS = 20;         // สูงสุดบนจอ
