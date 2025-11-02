@@ -1,14 +1,46 @@
 /* v7.3 — stable: background shift, water, road line, krathong flow, tuk on red line, logo fireworks */
 
-// ---------- QUICK TUNE ----------
-const BG_SHIFT_PX   = -64;  // ยกพื้นหลังขึ้นอีก (ติดลบ = ขึ้น) ปรับทีละ 2 ได้
-const WATER_FACTOR  = 0.75; // ระดับผิวน้ำ (ยิ่งน้อย น้ำยิ่งสูงขึ้นบนจอ)
-const ROAD_OFFSET   = 2;    // เส้นแดงสูงกว่า/ต่ำกว่าผิวน้ำกี่พิกเซล (+ลง, -ขึ้น)
-const LANES         = 5;
-const LANE_STEP     = 16;
-const BUBBLE_PADY   = 0.9;
-const KR_SIZE       = 60;
-const VER_SUFFIX    = '?v=7.3';
+// --- Responsive tune (mobile friendly) ---
+let BG_SHIFT_PX  = -34;   // จะถูกปรับอัตโนมัติจากฟังก์ชัน layoutByAspect()
+let WATER_FACTOR = 0.76;  // ยิ่งน้อย น้ำยิ่งสูงขึ้น (ภาพไม่จม)
+let ROAD_DY      = 14;    // ระยะเส้นแดงจากผิวน้ำ
+
+const LANES       = 5;
+const LANE_STEP   = 16;
+const BUBBLE_PADY = 0.90;
+const KR_SIZE     = 60;
+
+// ใช้กับ <img id="bgLayer"> ถ้ามี
+const bgEl = document.getElementById('bgLayer');
+function applyBgShift() {
+  document.documentElement.style.setProperty('--bg-shift', `${BG_SHIFT_PX}px`);
+  if (bgEl) bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
+}
+
+// คำนวณค่าตามอัตราส่วนจอ (ยืดหยุ่นกับมือถือ)
+function layoutByAspect() {
+  const vh = (window.visualViewport?.height || innerHeight);
+  const ar = vh / Math.max(1, innerWidth);  // aspect ratio (สูง/กว้าง)
+  if (ar > 2.0) {         // จอสูงมาก (มือถือหน้าจอยาว)
+    BG_SHIFT_PX  = -72;
+    WATER_FACTOR = 0.74;
+    ROAD_DY      = 12;
+  } else if (ar > 1.6) {  // มือถือทั่วไป
+    BG_SHIFT_PX  = -54;
+    WATER_FACTOR = 0.75;
+    ROAD_DY      = 13;
+  } else if (ar > 1.3) {  // แท็บเล็ตแนวตั้ง / มือถือกว้าง
+    BG_SHIFT_PX  = -40;
+    WATER_FACTOR = 0.76;
+    ROAD_DY      = 14;
+  } else {                // จอกว้าง
+    BG_SHIFT_PX  = -26;
+    WATER_FACTOR = 0.78;
+    ROAD_DY      = 15;
+  }
+  applyBgShift();
+}
+layoutByAspect();
 
 
 /* ---------- ELEMENTS ---------- */
@@ -24,15 +56,18 @@ const bgm    = document.getElementById('bgm');
 const bgEl = document.getElementById('bgLayer');
 if (bgEl) bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
 /* ---------- SIZE ---------- */
-function sizeCanvas(){
+function size(){
   const h = header ? header.offsetHeight : 0;
   cvs.width  = innerWidth;
   cvs.height = Math.max(1, (window.visualViewport?.height || innerHeight) - h);
   document.documentElement.style.setProperty('--hdr', h + 'px');
+
+  // NEW: ปรับค่าพื้นหลัง/น้ำ/เส้นแดงให้เข้ากับจอปัจจุบัน
+  layoutByAspect();
 }
-addEventListener('resize', ()=>requestAnimationFrame(sizeCanvas));
-addEventListener('orientationchange', sizeCanvas);
-sizeCanvas();
+addEventListener('resize', ()=>requestAnimationFrame(size));
+addEventListener('orientationchange', size);
+size();
 
 /* ---------- HELPERS ---------- */
 const rnd = (a,b)=> Math.random()*(b-a)+a;
@@ -49,9 +84,12 @@ function showToast(){ if(!toast) return; toast.classList.add('show'); setTimeout
 
 /* ผิวน้ำ/ถนน/เลน */
 const waterY = () => Math.round(cvs.height * WATER_FACTOR);
-const roadY  = () => waterY() + ROAD_OFFSET;                 // เส้นแดงชิดผิวน้ำ
-function laneY(i){ return waterY() + 14 + i * LANE_STEP; }   // กระทงต่ำลงเล็กน้อย ไม่ติดจอ
+const roadY  = () => waterY() + ROAD_DY;
 
+function laneY(i){
+  // ยกให้ต่ำลงเล็กน้อย เพื่อไม่ชนขอบน้ำด้านบน
+  return waterY() + 22 + i * LANE_STEP;
+}
 
 /* ---------- ASSETS ---------- */
 const tukImg  = makeImg('images/tuktuk.png');
