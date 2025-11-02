@@ -48,9 +48,10 @@
   addEventListener('orientationchange', size);
   size();
 
-  const waterY = () => Math.round(cvs.height * WATER_FACTOR);
-  const roadY  = () => waterY() + ROAD_DY;
-  const laneY  = (i) => waterY() + 20 + i * LANE_STEP;
+const waterY = () => Math.round(cvs.height * WATER_FACTOR);
+const roadY  = () => waterY() + ROAD_OFFSET;                 // เส้นแดงชิดผิวน้ำ
+function laneY(i){ return waterY() + 14 + i * LANE_STEP; }   // กระทงต่ำลงเล็กน้อย ไม่ติดจอ
+
 
   // ---------- assets ----------
   function img(path){ const i=new Image(); i.decoding='async'; i.onload=()=>i._ok=true; i.src=path+'?v=9'; return i; }
