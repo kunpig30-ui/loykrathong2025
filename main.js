@@ -16,6 +16,23 @@ addEventListener('resize', ()=>requestAnimationFrame(size));
 addEventListener('orientationchange', size);
 size();
 
+  // ---- image loader (ต้องประกาศก่อนใช้) ----
+const V = '?v=10';                              // กันแคช
+function makeImg(path){
+  const i = new Image();
+  i.decoding = 'async';
+  i.crossOrigin = 'anonymous';
+  i.onload  = () => i._ok = true;
+  i.onerror = () => console.warn('image not found:', path);
+  i.src = path + V;
+  return i;
+}
+
+// ---- assets ----
+const tukImg  = makeImg('images/tuktuk.png');
+const logoImg = makeImg('images/logo.png');
+const krImgs  = ['kt1.png','kt2.png','kt3.png','kt4.png','kt5.png']
+  .map(n => makeImg('images/'+n));
   // ---------- CONFIG ----------
   const MAX_BOATS = 20;         // สูงสุดบนจอ
   const LANES = 5;              // เลนไม่ชนกัน
