@@ -96,9 +96,14 @@ class Krathong{
   setWish(s){ this.text=(s||'').trim(); }
   get y(){ return laneY(this.lane)+Math.sin(this.t*this.freq+this.phase)*this.amp; }
   update(dt){
-    this.t += dt; this.x += this.vx*dt;
-    if (this.x > cvs.width + 160){ this.x = -160 - rnd(0,120); }
+  this.t += dt;
+  this.x += this.vx * dt;
+
+  if (this.x > cvs.width + 160){
+    this.x   = -160 - Math.random()*120;
+    this.text = '';                    // ← เคลียร์คำอธิษฐานเก่าเมื่อเริ่มรอบใหม่
   }
+}
   draw(g){
     const wy = waterY(), rx=this.size*.55, ry=6;
     // เงาที่ผิวน้ำ
@@ -131,13 +136,21 @@ class Krathong{
 function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
 
 /* 5 ใบ คนละเลน + offset ไม่ชนกัน */
-const boats = krImgs.map((im,i)=> new Krathong(im, i%LANES, i*120));
+const boats = krImgs.map((im,i)=> new Krathong(im, i % LANES, i*120));
+let nextIdx = 0;   // ตัวชี้ round-robin
 
 /* เลือกใบ “ซ้ายสุด” เพื่อให้ปล่อยซ้าย→ขวา */
-function pickNextBoat(){
-  let best = boats[0], min = boats[0].x;
-  for (const b of boats){ if (b.x < min){ min = b.x; best = b; } }
-  return best;
+function takeNextBoat(){
+  // เลือกใบที่พร้อมจะออกจากซ้าย (ยังอยู่นอกจอทางซ้าย)
+  const ready = boats.filter(b => b.x < -120);
+  if (ready.length){
+    // ซ้ายสุดของกลุ่ม ready
+    return ready.reduce((a,b)=> (a.x < b.x ? a : b));
+  }
+  // ถ้าไม่มีใบพร้อม ให้ใช้รอบแบบลูป
+  const b = boats[nextIdx];
+  nextIdx = (nextIdx + 1) % boats.length;
+  return b;
 }
 
 /* ---------- LAUNCH BUTTON ---------- */
@@ -150,15 +163,25 @@ function onLaunchClick(){
     if (bgm && bgm.paused){ bgm.currentTime=0; bgm.play().catch(()=>{}); }
   }catch{}
 }
-const launchBtn = document.getElementById('launch');
-if (launchBtn){
-  launchBtn.addEventListener('click', ()=>{
-    if (launchBtn.disabled) return;
-    launchBtn.disabled = true;
-    onLaunchClick();
-    setTimeout(()=> launchBtn.disabled=false, 450);
-  });
-}
+const launchBtn = document.getElementById('launch')?.addEventListener('click', async ()=>{
+  try{
+    const btn = document.getElementById('launch');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+
+    const t = (wishEl?.value || '').trim();
+    if (t) {
+      const b = takeNextBoat();   // ← ใช้ตัวเลือกใหม่
+      b.setWish(t);
+    }
+    if (wishEl) wishEl.value = '';
+
+    bump(); pushWish(t); showToast();
+    if (bgm && bgm.paused){ bgm.currentTime=0; await bgm.play().catch(()=>{}); }
+  } finally {
+    setTimeout(()=>{ const b=document.getElementById('launch'); if(b) b.disabled=false; }, 500);
+  }
+});
 
 /* ---------- FIREWORKS (3 จุด, โลโก้) ---------- */
 class Firework{
