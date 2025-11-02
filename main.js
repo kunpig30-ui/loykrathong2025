@@ -144,22 +144,70 @@ bgm?.addEventListener('error', e=>console.warn('audio error', e));
   function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
 
   // active boats
-  const boats = [];
+  /* ====== Continuous launch (max 20), wish -> left-most boat ====== */
+const MAX_BOATS = 20;
 
-  function addBoatWithWish(text){
-    // จำกัดไม่เกิน MAX
-    if (boats.length >= MAX_BOATS) {
-      // ลบลำที่อยู่ขวาสุด (ใกล้หมด) เพื่อรับลำใหม่
-      boats.sort((a,b)=>a.x-b.x);
-      boats.pop();
+// เริ่มต้นมี 5 ใบ (แต่สามารถเพิ่มได้จนถึง 20)
+const boats = (window.boats && Array.isArray(window.boats))
+  ? window.boats
+  : krImgs.map((im, i) => new Krathong(im, i % LANES, i * 120));
+
+// เลือก “กระทงที่อยู่ซ้ายสุด” (x น้อยสุด) เพื่อออกก่อน
+function leftMostBoat() {
+  let b = boats[0], m = boats[0].x;
+  for (const k of boats) { if (k.x < m) { m = k.x; b = k; } }
+  return b;
+}
+
+// เลือกเลนใหม่แบบวน (0..LANES-1) เพื่อกระจายไม่ชน
+let nextLaneIdx = boats.length % LANES;
+
+// ป้องกันกดรัว ๆ
+let launching = false;
+
+document.getElementById('launch')?.addEventListener('click', async () => {
+  if (launching) return;
+  launching = true;
+
+  try {
+    const wishEl = document.getElementById('wish');
+    const t = (wishEl?.value || '').trim();
+
+    // ยังไม่ถึง 20 → เพิ่มใบใหม่เข้ากอง (เริ่มออกจากซ้าย)
+    if (boats.length < MAX_BOATS) {
+      const lane = nextLaneIdx % LANES;
+      nextLaneIdx++;
+
+      const b = new Krathong(krImgs[lane], lane, 0);
+      b.x = -180 - Math.random() * 120;     // เริ่มจากซ้ายทันที
+      boats.push(b);
     }
-    const lane = krSeq % LANES;
-    const img = krImgs[krSeq % krImgs.length];
-    krSeq++;
-    const b = new Krathong(img, lane);
-    b.setWish(text);
-    boats.push(b);
+
+    if (t) {
+      // ผูกคำอธิษฐานกับ “ใบที่จะออกก่อน” (ซ้ายสุด)
+      const target = leftMostBoat();
+      target.setWish(t);
+
+      // ถ้าอยากให้ “รีสตาร์ทจากซ้ายเดี๋ยวนั้น” ให้ปลดคอมเมนต์บรรทัดถัดไป
+      // target.x = -180 - Math.random() * 120;
+    }
+
+    // เคลียร์ input + นับสถิติ + log
+    if (wishEl) wishEl.value = '';
+    if (typeof bump === 'function') bump();
+    if (typeof pushWish === 'function') pushWish(t);
+    if (typeof showToast === 'function') showToast();
+
+    // เล่นเพลง (ถ้ายังไม่ได้เล่น)
+    try {
+      if (bgm && bgm.paused) { bgm.currentTime = 0; await bgm.play(); }
+    } catch {}
+
+  } finally {
+    setTimeout(() => { launching = false; }, 300);   // หน่วงกันกดรัว 0.3s
   }
+});
+/* ================================================================ */
 
   // ---------- Fireworks ----------
   class Firework{
