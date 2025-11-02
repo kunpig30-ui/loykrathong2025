@@ -15,13 +15,14 @@ const bgImg = document.getElementById('bgLayer');
 const bgm = document.getElementById('bgm');
 
 /* ===== Utils ===== */
+const VERSION_QS='?v=11';                    // กันแคช
 function makeImg(path){
-  const i = new Image();
-  i.crossOrigin = 'anonymous';
-  i.decoding = 'async';
-  i.onload = ()=> i._ok = true;
-  i.onerror = ()=> console.warn('image not found:', path);
-  i.src = path + VERSION_QS;
+  const i=new Image();
+  i.crossOrigin='anonymous';
+  i.decoding='async';
+  i.onload=()=>i._ok=true;
+  i.onerror=()=>console.warn('image not found:', path);
+  i.src=path+VERSION_QS;
   return i;
 }
 const rnd = (a,b)=> Math.random()*(b-a) + a;
@@ -29,7 +30,7 @@ const rnd = (a,b)=> Math.random()*(b-a) + a;
 /* ===== Assets ===== */
 const tukImg  = makeImg('images/tuktuk.png');
 const logoImg = makeImg('images/logo.png');
-const krImgs  = ['kt1.png','kt2.png','kt3.png','kt4.png','kt5.png'].map(n=> makeImg('images/'+n));
+const krImgs  = ['kt1.png','kt2.png','kt3.png','kt4.png','kt5.png'].map(n=>makeImg('images/'+n));
 
 /* ===== Size ===== */
 function size(){
@@ -183,13 +184,17 @@ function drawWater(){
 
 /* ===== Loop ===== */
 function loop(ts){
-  const dt=Math.min(.033,(ts-last)/1000); last=ts; waveT+=dt;
+  const dt = Math.min(.033,(ts-last)/1000); last=ts; waveT+=dt;
+  ctx.globalCompositeOperation = 'source-over';  // << เพิ่มบรรทัดนี้
   ctx.clearRect(0,0,cvs.width,cvs.height);
-  drawWater(); drawRoadLine();
+
+  drawWater();
+  drawRoadLine();
   fireworks.forEach(f=>{ f.update(dt); f.draw(ctx); });
   drawTuk(dt);
   boats.forEach(b=>b.update(dt));
   boats.forEach(b=>b.draw(ctx));
+
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
