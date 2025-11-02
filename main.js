@@ -118,28 +118,27 @@ function leftMostBoat(){
 
 /* ===== Launch handler (≤20, ผูกใบซ้ายสุด) ===== */
 let launching=false;
-document.getElementById('launch')?.addEventListener('click', async ()=>{
-  if (launching) return; launching=true;
-  try{
-    const wishEl=document.getElementById('wish');
-    const t=(wishEl?.value||'').trim();
+const MAX_BOATS = 20;
+function leftMostBoat(){
+  let b=boats[0], m=boats[0].x;
+  for(const k of boats){ if(k.x<m){ m=k.x; b=k; } }
+  return b;
+}
 
-    if (boats.length < MAX_BOATS){
-      const lane = nextLane % LANES; nextLane++;
-      const b = new Krathong(krImgs[lane], lane, 0);
-      b.x = -180 - Math.random()*120;       // ออกจากซ้ายทันที
-      boats.push(b);
-    }
-    if (t) leftMostBoat().setWish(t);
-
-    if (wishEl) wishEl.value='';
-    bump(); pushWish(t);
-
-    try{ if(bgm && bgm.paused){ bgm.currentTime=0; await bgm.play(); } }catch{}
-  } finally {
-    setTimeout(()=> launching=false, 300);
+let nextLane = boats.length % LANES;
+launchBtn?.addEventListener('click', async ()=>{
+  if (boats.length < MAX_BOATS){
+    const lane = nextLane % LANES; nextLane++;
+    const b = new Krathong(krImgs[lane], lane, 0);
+    b.x = -180 - Math.random()*120;          // ให้เริ่มซ้ายออกเลย
+    boats.push(b);
   }
+  const t = (wishEl?.value||'').trim();
+  if (t) leftMostBoat().setWish(t);          // ผูกกับ “ใบซ้ายสุด” ที่จะออกก่อน
+
+  // ที่เหลือ: bump()/pushWish()/เล่นเพลง เหมือนเดิม
 });
+
 
 /* ===== Fireworks (3 จุด โลโก้) ===== */
 class Firework{
