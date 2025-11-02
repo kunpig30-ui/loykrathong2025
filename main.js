@@ -54,11 +54,13 @@ function laneY(i){ return waterY() + 14 + i * LANE_STEP; }   // กระทง�
 
 
   // ---------- assets ----------
-  function img(path){ const i=new Image(); i.decoding='async'; i.onload=()=>i._ok=true; i.src=path+'?v=9'; return i; }
-  const tukImg  = img('images/tuktuk.png');
-  const logoImg = img('images/logo.png');
-  const krImgs  = ['kt1.png','kt2.png','kt3.png','kt4.png','kt5.png'].map(n=>img('images/'+n));
-  let krSeq = 0;
+function img(path){ const i=new Image(); i.decoding='async'; i.onload=()=>i._ok=true; i.src=path+'?v=9'; return i; }
+const tukImg  = makeImg('images/tuktuk.png');
+const logoImg = makeImg('images/logo.png');
+const krImgs  = ['kt1.png','kt2.png','kt3.png','kt4.png','kt5.png'].map(n=> makeImg('images/'+n));
+
+bgm?.addEventListener('error', e=>console.warn('audio error', e));
+
 
   // ---------- state / store ----------
   const LS_COUNT="loy.count", LS_LOG="loy.wishes.log";
@@ -91,7 +93,7 @@ function laneY(i){ return waterY() + 14 + i * LANE_STEP; }   // กระทง�
       this.t += dt;
       this.x += this.vx * dt;
     }
-    get dead(){ return this.x > cvs.width + 180; }
+    get dead(){ return this.x > cvs.width + 160; }
     draw(g){
       const wy = waterY();
       // shadow
