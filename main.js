@@ -187,19 +187,20 @@ function drawTuk(dt){
 }
 
   // ---------- Water / waves ----------
-  let waveT = 0, last = performance.now();
-  function drawWater(){
-    const y = waterY();
-    ctx.fillStyle='rgba(10,32,63,.96)'; ctx.fillRect(0,y,cvs.width,cvs.height-y);
-    ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.strokeStyle='rgba(255,255,255,.2)';
-    for(let i=0;i<10;i++){ ctx.beginPath();
-      for(let x=0;x<cvs.width;x+=20){
-        const yy=y + Math.sin((x/40)+waveT*1.2+i)*6 + i*16;
-        if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
-      }
-      ctx.stroke();
+let waveT=0, last=performance.now();
+function drawWater(){
+  const y=waterY();
+  ctx.fillStyle='rgba(10,32,63,.96)'; ctx.fillRect(0,y,cvs.width,cvs.height-y);
+  ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.strokeStyle='rgba(255,255,255,.2)';
+  for(let i=0;i<10;i++){
+    ctx.beginPath();
+    for(let x=0;x<cvs.width;x+=20){
+      const yy=y + Math.sin((x/40)+waveT*1.2+i)*6 + i*16;
+      if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
     }
+    ctx.stroke();
   }
+}
 
   // ---------- Loop ----------
   function loop(ts){
