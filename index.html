@@ -16,24 +16,26 @@
   .btn-blue{ background:#2563eb; color:#fff; }
   .btn-green{ background:#15803d; color:#fff; }
 
-  /* พื้นหลัง responsive (มือถือใช้ bg5mb.png, เดสก์ท็อปใช้ bg5.png) */
-  #bgWrap{ position:relative; }
-  #bgLayer{
-    display:block; width:100%; height:auto;
-    transform: translateY(var(--bg-shift));
-  }
-  @media (max-width:640px){
-    :root{ --bg-shift:-36px; }            /* ยกพื้นหลังขึ้นบนมือถือ */
-    #bgLayer{ content: url('images/bg5mb.png'); }
-  }
-  @media (min-width:641px){
-    #bgLayer{ content: url('images/bg5.png'); }
-  }
+/* พื้นหลังเป็นชั้นลอยด้านหลังเสมอ */
+#bg{
+  position: fixed;
+  top: var(--hdr);
+  left: 0;
+  width: 100%;
+  height: calc(100dvh - var(--hdr));
+  z-index: 0;                                /* อยู่ข้างล่าง */
+  background: url('images/bg5.png') top center / cover no-repeat;
+  transform: translateY(-24px);              /* ยกภาพขึ้นลดพื้นดำ – ปรับทีละ 2px ได้ */
+}
 
-  /* เวที */
-  .stage{ position:relative; }
-  canvas#scene{ display:block; width:100%; height:calc(100dvh - var(--hdr)); }
+/* มือถือใช้ภาพ bg5mb.png */
+@media (max-width: 640px){
+  #bg{ background-image: url('images/bg5mb.png'); transform: translateY(-36px); }
+}
 
+/* เวทีวาด (บนสุด) */
+.stage{ position: relative; z-index: 1; }
+canvas#scene{ display:block; width:100%; height:calc(100dvh - var(--hdr)); }
   /* รายชื่ออธิษฐาน */
   ul#wishList{ list-style:none; margin:.25rem 0 0 0; padding-left:1rem; }
   ul#wishList li{ opacity:.9; }
@@ -51,7 +53,12 @@
   <ul id="wishList"></ul>
 </header>
 
-<div id="bgWrap"><img id="bgLayer" alt=""></div>
+<!-- วางใต้ <header> ทันที -->
+<div id="bg"></div>
+
+<div class="stage">
+  <canvas id="scene"></canvas>
+</div>
 <div class="stage"><canvas id="scene"></canvas></div>
 
 <audio id="bgm" preload="auto" loop src="audio/song.mp3"></audio>
