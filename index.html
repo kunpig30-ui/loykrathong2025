@@ -5,93 +5,143 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
   <style>
-    :root{ --hdr: 0px; }
-    *{ box-sizing:border-box; margin:0; padding:0; }
-    html,body{ height:100%; background:#081522; color:#e9f0ff; font-family:system-ui,'TH Sarabun New',Prompt,sans-serif; }
+    :root { --hdr: 0px; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html,body {
+      height:100%;
+      background:#081522;
+      color:#e9f0ff;
+      font-family:system-ui,'TH Sarabun New',Prompt,sans-serif;
+      overflow:hidden; /* ไม่มีแถบเลื่อนแนวตั้ง */
+    }
 
-    /* ========== TOP (อินพุต + ปล่อย) ========== */
-    header{
-      position:relative; z-index:5;
+    /* ========== TOP (ช่องพิมพ์ + ปุ่มปล่อย) ========== */
+    header {
+      position:relative;
+      z-index:5;
       padding:10px 12px 6px;
       background:linear-gradient(to bottom,rgba(3,12,24,.95),rgba(3,12,24,.86));
       border-bottom:1px solid rgba(255,255,255,.06);
     }
-    #topDock{
-      max-width:840px; margin:0 auto;
-      display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;
+    #topDock {
+      max-width:840px;
+      margin:0 auto;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
     }
-    #wish{
-      flex:1 1 360px; min-width:240px;
-      padding:10px 12px; border-radius:12px; border:0; outline:0; color:#0c1424;
+    #wish {
+      flex:1 1 360px;
+      min-width:240px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:0;
+      outline:0;
+      color:#0c1424;
     }
-    .btn{ padding:10px 14px; border-radius:12px; border:0; font-weight:700; cursor:pointer; }
-    .btn.green{ background:#2e7d32; color:#fff; }
+    .btn {
+      padding:10px 14px;
+      border-radius:12px;
+      border:0;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn.green { background:#2e7d32; color:#fff; }
 
-    /* ========== ฉาก (bg + canvas) ========== */
-    #stage{ position:relative; z-index:1; width:100%; height:calc(100vh - var(--hdr)); overflow:hidden; }
-    #bgLayer{
-      display:block; width:100%;
-      height:calc(100vh - var(--hdr));
-      object-fit:cover; object-position:center top;
-      transform:translateY(var(--bg-shift, -26px));
-      user-select:none; -webkit-user-drag:none;
+    /* ========== SCENE (bg + canvas) ========== */
+    #stage {
+      position:relative;
+      z-index:1;
+      width:100%;
+      height:calc(100vh - var(--hdr) - 56px); /* เว้นล่างสำหรับแถบล่าง */
+      overflow:hidden;
     }
-    @media(max-width:640px){ #bgLayer{ transform:translateY(var(--bg-shift, -36px)); } }
-    #scene{ position:absolute; inset:0; width:100%; height:100%; }
+    #bgLayer {
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:contain; /* เห็นทั้งภาพ */
+      object-position:center top;
+      transform:translateY(var(--bg-shift,-18px)); /* ยกขึ้นเล็กน้อย */
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    @media(max-width:640px){
+      #bgLayer{ transform:translateY(var(--bg-shift,-24px)); }
+    }
+    #scene {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+    }
 
     /* ========== BOTTOM (สถิติ + เพลง + CSV + รายชื่อ) ========== */
-    /* 1) bottomBar fixed = ไม่มีแถบเลื่อน */
- #bottomBar{
-  position: fixed;       /* เดิม: sticky */
-  left: 0; right: 0; bottom: 0;
-  z-index: 10;
-  background: rgba(6,12,20,.75);
-  border-top: 1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(4px);
-}
+    #bottomBar {
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:10;
+      background:rgba(6,12,20,.75);
+      border-top:1px solid rgba(255,255,255,.10);
+      backdrop-filter:blur(4px);
+    }
+    #bottomInner {
+      max-width:980px;
+      margin:0 auto;
+      padding:8px 10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+    }
+    .chip {
+      padding:10px 16px;
+      border-radius:12px;
+      border:0;
+      font-weight:700;
+      color:#fff;
+      cursor:pointer;
+    }
+    .chip.red { background:#e53935; }
+    .chip.blue { background:#1e88e5; }
+    #wishList {
+      list-style:none;
+      width:100%;
+      padding:6px 12px 8px;
+      line-height:1.45;
+      font-size:15px;
+      max-height:100px;
+      overflow:auto;
+    }
+    #wishList li {
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
-/* 2) ให้เวทีไม่ถูก bottomBar บัง: กันไว้เล็กน้อย */
-#stage{ height: calc(100vh - var(--hdr) - 56px); } /* 56px ≈ ความสูงแถบล่าง */
-
-/* 3) พื้นหลังให้เห็นครบ ไม่ซูมเกิน + ยกขึ้นนิด */
-#bgLayer{
-  display:block;
-  width:100%;
-  height:100%;
-  object-fit: contain;          /* เดิม: cover → บางเครื่อง “ใหญ่ไป/จมน้ำ” */
-  object-position: center top;
-  transform: translateY(var(--bg-shift, -18px)); /* ยกขึ้นเล็กน้อย */
-  user-select:none; -webkit-user-drag:none;
-}
-@media (max-width:640px){
-  #bgLayer{ transform: translateY(var(--bg-shift, -24px)); }
-}
+    /* ========== Toast ========== */
+    #toast {
+      position:fixed;
+      left:50%;
+      top:calc(var(--hdr) + 10px);
+      translate:-50% 0;
+      padding:10px 14px;
+      background:#0e1726;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:14px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+      z-index:9;
     }
-    #bottomInner{
-      max-width:980px; margin:0 auto; padding:8px 10px;
-      display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center;
-    }
-    .chip{ padding:10px 16px; border-radius:12px; border:0; font-weight:700; color:#fff; cursor:pointer; }
-    .chip.red{ background:#e53935; }
-    .chip.blue{ background:#1e88e5; }
-    #wishList{
-      list-style:none; width:100%;
-      padding:6px 12px 8px; line-height:1.45; font-size:15px;
-      max-height:120px; overflow:auto;
-    }
-    #wishList li{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-    /* Toast */
-    #toast{
-      position:fixed; left:50%; top:calc(var(--hdr) + 10px); translate:-50% 0;
-      padding:10px 14px; background:#0e1726; border:1px solid rgba(255,255,255,.25);
-      border-radius:14px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:9;
-    }
-    #toast.show{ opacity:1; }
+    #toast.show { opacity:1; }
   </style>
 </head>
 <body>
-  <!-- TOP: อินพุต + ปุ่มปล่อย -->
+  <!-- ด้านบน: พิมพ์คำอธิษฐาน -->
   <header>
     <div id="topDock">
       <input id="wish" placeholder="พิมพ์คำอธิษฐานของคุณ..." />
@@ -99,13 +149,13 @@
     </div>
   </header>
 
-  <!-- STAGE -->
+  <!-- ฉากหลัก -->
   <div id="stage">
-    <img id="bgLayer" src="images/bg5.png" alt="bg">
+    <img id="bgLayer" src="images/bg5.png" alt="bg" />
     <canvas id="scene"></canvas>
   </div>
 
-  <!-- BOTTOM: สถิติ + เพลง + CSV + รายชื่อ -->
+  <!-- ด้านล่าง: สถิติ + เพลง + CSV + รายชื่อ -->
   <div id="bottomBar">
     <div id="bottomInner">
       <button class="chip red">ลอยแล้ว <span id="statCount">0</span> ใบ</button>
@@ -118,6 +168,6 @@
   <audio id="bgm" preload="auto" loop src="audio/song.mp3"></audio>
   <div id="toast">ปล่อยแล้ว 🎆</div>
 
-  <script src="main.js?v=12.1" defer></script>
+  <script src="main.js?v=12.2" defer></script>
 </body>
 </html>
