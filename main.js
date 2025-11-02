@@ -34,10 +34,12 @@
 
   // ---------- resize/layout ----------
   function size(){
-    const h = header?.offsetHeight || 0;
-    cvs.width = innerWidth;
-    cvs.height = Math.max(1, (visualViewport?.height || innerHeight) - h);
-    document.documentElement.style.setProperty('--hdr', h + 'px');
+   function size(){
+  const h = header?.offsetHeight || 0;
+  cvs.width  = innerWidth;
+  cvs.height = Math.max(1, (visualViewport?.height || innerHeight) - h);
+  document.documentElement.style.setProperty('--hdr', h + 'px');
+}
 
     // ดันพื้นหลังขึ้นอีกเล็กน้อยบนจอสูงๆ
     const ar = cvs.height / Math.max(1,cvs.width);
