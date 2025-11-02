@@ -6,7 +6,7 @@
   const ctx = cvs.getContext('2d');
   const header = document.querySelector('header');
   const bg = document.getElementById('bgLayer');
-
+  const ROAD_OFFSET   = 2;    // เส้นแดงสูงกว่า/ต่ำกว่าผิวน้ำกี่พิกเซล (+ลง, -ขึ้น)
   const elWish = document.getElementById('wish');
   const elLaunch = document.getElementById('launch');
   const elStat = document.getElementById('statCount');
