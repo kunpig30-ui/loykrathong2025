@@ -15,7 +15,7 @@ const VER_SUFFIX    = '?v=7.3';
 const cvs    = document.getElementById('scene');
 const ctx    = cvs.getContext('2d');
 const header = document.querySelector('header');
-const bgEl   = document.getElementById('bgLayer');
+
 const wishEl = document.getElementById('wish');
 const toast  = document.getElementById('toast');
 const bgm    = document.getElementById('bgm');
