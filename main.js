@@ -22,7 +22,7 @@ const bgm    = document.getElementById('bgm');
 
 /* ยกภาพพื้นหลังขึ้นเพื่อลดแถบดำด้านบน */
 const bgEl = document.getElementById('bgLayer');
-
+if (bgEl) bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
 /* ---------- SIZE ---------- */
 function sizeCanvas(){
   const h = header ? header.offsetHeight : 0;
