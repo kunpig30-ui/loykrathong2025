@@ -25,9 +25,10 @@
       display:block; width:100%; height:100%;
     }
     #bgLayer{
-      object-fit: cover;           /* เติมเต็มจอ */
-      object-position: center bottom; /* ยึดด้านล่าง */
-      user-select:none; -webkit-user-drag:none;
+     #bgWrap{ position:fixed; left:0; right:0; top:var(--hdr); height:calc(100vh - var(--hdr)); z-index:0; pointer-events:none; }
+#bgLayer{ width:100%; height:100%; object-fit:cover; object-position:center bottom; display:block; }
+#scene{ position:fixed; left:0; right:0; top:var(--hdr); width:100vw; height:calc(100vh - var(--hdr)); z-index:1; display:block; 
+
     }
 
     /* Canvas เล่นแอนิเมชัน */
