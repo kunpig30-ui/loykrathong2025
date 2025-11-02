@@ -1,14 +1,15 @@
 /* v7.3 — stable: background shift, water, road line, krathong flow, tuk on red line, logo fireworks */
 
-/* ---------- QUICK TUNE ---------- */
-const BG_SHIFT_PX   = -44;  // ยกภาพพื้นหลังขึ้น (ติดลบ = ยกขึ้น) ปรับทีละ 2 ได้
-const WATER_FACTOR  = 0.76; // ระดับผิวน้ำ (สัดส่วนความสูงจอ) 0.76 = น้ำสูงกว่าค่าเดิม
-const ROAD_DY       = 2;   // ระยะจากผิวน้ำไป “เส้นแดง” ให้ปริ่มคลื่น
-const LANES         = 5;    // จำนวนเลน
-const LANE_STEP     = 16;   // ระยะห่างแต่ละเลน (กันชน)
-const BUBBLE_PADY   = 0.9;  // ระยะฟองอธิษฐานจากตัวกระทง (เท่าของขนาด)
-const KR_SIZE       = 60;   // ขนาดกระทง
+// ---------- QUICK TUNE ----------
+const BG_SHIFT_PX   = -64;  // ยกพื้นหลังขึ้นอีก (ติดลบ = ขึ้น) ปรับทีละ 2 ได้
+const WATER_FACTOR  = 0.75; // ระดับผิวน้ำ (ยิ่งน้อย น้ำยิ่งสูงขึ้นบนจอ)
+const ROAD_OFFSET   = 2;    // เส้นแดงสูงกว่า/ต่ำกว่าผิวน้ำกี่พิกเซล (+ลง, -ขึ้น)
+const LANES         = 5;
+const LANE_STEP     = 16;
+const BUBBLE_PADY   = 0.9;
+const KR_SIZE       = 60;
 const VER_SUFFIX    = '?v=7.3';
+
 
 /* ---------- ELEMENTS ---------- */
 const cvs    = document.getElementById('scene');
@@ -20,6 +21,7 @@ const toast  = document.getElementById('toast');
 const bgm    = document.getElementById('bgm');
 
 /* ยกภาพพื้นหลังขึ้นเพื่อลดแถบดำด้านบน */
+const bgEl = document.getElementById('bgLayer');
 if (bgEl) bgEl.style.transform = `translateY(${BG_SHIFT_PX}px)`;
 
 /* ---------- SIZE ---------- */
@@ -48,8 +50,9 @@ function showToast(){ if(!toast) return; toast.classList.add('show'); setTimeout
 
 /* ผิวน้ำ/ถนน/เลน */
 const waterY = () => Math.round(cvs.height * WATER_FACTOR);
-const roadY  = () => waterY() + ROAD_DY;
-function laneY(i){ return waterY() + 22 + i*LANE_STEP; } // กระทงต่ำลงเล็กน้อย
+const roadY  = () => waterY() + ROAD_OFFSET;                 // เส้นแดงชิดผิวน้ำ
+function laneY(i){ return waterY() + 14 + i * LANE_STEP; }   // กระทงต่ำลงเล็กน้อย ไม่ติดจอ
+
 
 /* ---------- ASSETS ---------- */
 const tukImg  = makeImg('images/tuktuk.png');
@@ -194,13 +197,16 @@ setTimeout(spawnTriple, 2500); setInterval(spawnTriple, 12000);
 const tuk = { x:-220, w:140, h:90, speed:35 };
 function drawRoadLine(){
   const y = roadY();
-  ctx.strokeStyle='#ff4444'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.width,y); ctx.stroke();
+  ctx.strokeStyle = '#ff4444';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cvs.width, y); ctx.stroke();
 }
 function drawTuk(dt){
-  tuk.x += tuk.speed*dt; if (tuk.x > cvs.width+220) tuk.x = -220;
-  let y = roadY() - tuk.h + 6;       // ให้ล้อทับเส้นแดงนิด ๆ
-  y = Math.max(waterY()+6, y);       // กันจมน้ำ
+  tuk.x += tuk.speed * dt;
+  if (tuk.x > cvs.width + 220) tuk.x = -220;
+
+  // วางให้ล้อติดบนเส้นแดงนิด ๆ
+  const y = roadY() - tuk.h + 6;    // ← ไม่มี Math.max(waterY()+6, y) อีกแล้ว!
   if (tukImg && tukImg._ok) ctx.drawImage(tukImg, tuk.x, y, tuk.w, tuk.h);
 }
 
