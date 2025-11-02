@@ -1,96 +1,61 @@
 <!doctype html>
 <html lang="th">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+<link rel="icon" href="data:,"> <!-- กัน 404 -->
+<style>
+  :root{ --hdr:64px; --bg-shift:-24px; }
+  body{ margin:0; background:#071423; color:#e9f0ff; font:600 16px system-ui, 'TH Sarabun New', Prompt, sans-serif; }
+  header{ position:sticky; top:0; z-index:10; padding:.75rem 1rem; background:linear-gradient(#0c1f36,#08182a); }
+  header .row{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  button, input{ font:inherit; }
+  .btn{ padding:.5rem .9rem; border:0; border-radius:.6rem; cursor:pointer; }
+  .btn-red{ background:#e11d48; color:#fff; }
+  .btn-blue{ background:#2563eb; color:#fff; }
+  .btn-green{ background:#15803d; color:#fff; }
 
-  <style>
-    :root{ --hdr: 0px; }
-    /* Header */
-    header{
-      position: fixed; inset: 0 0 auto 0;
-      height: auto; padding: 12px 16px;
-      background: linear-gradient(#0b1625, #0b1625ee);
-      z-index: 3; color:#eaf2ff; font-family: system-ui, 'TH Sarabun New', Prompt, sans-serif;
-    }
+  /* พื้นหลัง responsive (มือถือใช้ bg5mb.png, เดสก์ท็อปใช้ bg5.png) */
+  #bgWrap{ position:relative; }
+  #bgLayer{
+    display:block; width:100%; height:auto;
+    transform: translateY(var(--bg-shift));
+  }
+  @media (max-width:640px){
+    :root{ --bg-shift:-36px; }            /* ยกพื้นหลังขึ้นบนมือถือ */
+    #bgLayer{ content: url('images/bg5mb.png'); }
+  }
+  @media (min-width:641px){
+    #bgLayer{ content: url('images/bg5.png'); }
+  }
 
-    /* พื้นหลังให้เต็มจอและชิดด้านล่างเสมอ */
-    #bgWrap{
-      position: fixed; left:0; right:0; top: var(--hdr);
-      height: calc(100vh - var(--hdr));
-      z-index: 0; pointer-events: none;
-    }
-    #bgWrap > picture, #bgLayer{
-      display:block; width:100%; height:100%;
-    }
-    #bgLayer{
-     #bgWrap{ position:fixed; left:0; right:0; top:var(--hdr); height:calc(100vh - var(--hdr)); z-index:0; pointer-events:none; }
-#bgLayer{ width:100%; height:100%; object-fit:cover; object-position:center bottom; display:block; }
-#scene{ position:fixed; left:0; right:0; top:var(--hdr); width:100vw; height:calc(100vh - var(--hdr)); z-index:1; display:block; 
+  /* เวที */
+  .stage{ position:relative; }
+  canvas#scene{ display:block; width:100%; height:calc(100dvh - var(--hdr)); }
 
-    }
-
-    /* Canvas เล่นแอนิเมชัน */
-    #scene{
-      position: fixed; left:0; right:0; top: var(--hdr);
-      width: 100vw; height: calc(100vh - var(--hdr));
-      z-index: 1; display:block;
-    }
-
-    /* แผงปุ่มต่าง ๆ อยู่เหนือสุด */
-    #ui{
-      position: fixed; left:0; right:0; top:0;
-      padding: 8px 12px; z-index: 4; pointer-events: none;
-    }
-    #ui .row{ display:flex; gap:8px; flex-wrap:wrap; pointer-events:auto; }
-    button, .chip{
-      padding: 10px 14px; border-radius:12px; border:0; font-weight:600; cursor:pointer;
-    }
-    .btn-red{ background:#e53935; color:#fff; }
-    .btn-blue{ background:#2962ff; color:#fff; }
-    .btn-green{ background:#1b5e20; color:#fff; }
-
-    /* กล่องข้อความอธิษฐาน */
-    #wish{ width:min(420px, 80vw); padding:10px 14px; border-radius:12px; border:0; }
-
-    body{ margin:0; background:#0b1625; }
-  </style>
+  /* รายชื่ออธิษฐาน */
+  ul#wishList{ list-style:none; margin:.25rem 0 0 0; padding-left:1rem; }
+  ul#wishList li{ opacity:.9; }
+</style>
 </head>
 <body>
-
-  <header>
-    <div style="font-size:20px; font-weight:700;">🌾 ลอยกระทงออนไลน์ · ปลอดบุหรี่</div>
-  </header>
-
-  <!-- UI -->
-  <div id="ui" aria-hidden="false">
-    <div class="row" style="margin-top:56px">
-      <button id="exportStat" class="btn-blue">⬇️ CSV สถิติ</button>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <input id="wish" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด" />
-      <button id="launch" class="btn-green">ปล่อย</button>
-    </div>
+<header>
+  <div class="row">
+    <button id="stat" class="btn btn-red">ลอยแล้ว <span id="statCount">0</span> ใบ</button>
+    <button id="toggleBgm" class="btn btn-blue">▶️⏸ เพลง</button>
+    <button id="exportStat" class="btn btn-blue">⬇️ CSV สถิติ</button>
+    <input id="wish" class="btn" style="flex:1; background:#10304f; color:#cfe6ff" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด">
+    <button id="launch" class="btn btn-green">ปล่อย</button>
   </div>
+  <ul id="wishList"></ul>
+</header>
 
-  <!-- BG: desktop = bg5.png, mobile = bg5mb.png -->
-  <div id="bgWrap" aria-hidden="true">
-    <picture>
-      <source media="(max-width: 480px)" srcset="images/bg5mb.png">
-      <img id="bgLayer" src="images/bg5.png" alt="">
-    </picture>
-  </div>
+<div id="bgWrap"><img id="bgLayer" alt=""></div>
+<div class="stage"><canvas id="scene"></canvas></div>
 
-  <!-- แคนวาสหลัก -->
-  <canvas id="scene"></canvas>
+<audio id="bgm" preload="auto" loop src="audio/song.mp3"></audio>
 
-  <!-- เพลง -->
-  <audio id="bgm" preload="auto">
-    <source src="audio/song.mp3" type="audio/mpeg">
-  </audio>
-
-  <!-- สคริปต์หลัก (ใส่ defer เพื่อไม่บล็อกโหลด) -->
-  <script src="main.js?v=10" defer></script>
+<script src="main.js?v=11" defer></script>
 </body>
 </html>
