@@ -25,11 +25,36 @@
     }
     #wrap { position:relative; }
     /* พื้นหลังให้ยึด viewport และขยับขึ้นด้วยตัวแปร --bg-shift */
-    #bgLayer{
-      display:block; width:100%; height:auto;
-      transform: translateY(var(--bg-shift, 0));
-      user-select:none; -webkit-user-drag:none; pointer-events:none;
-    }
+   /* พื้นหลังให้ยึดเต็ม viewport และชิดด้านล่างเสมอ */
+#bgWrap{
+  position: fixed;
+  left: 0; right: 0;
+  top: var(--hdr);
+  height: calc(100vh - var(--hdr));
+  z-index: 0;           /* อยู่หลังแคนวาส */
+  pointer-events: none; /* ไม่บังการคลิก */
+}
+
+#bgLayer{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* เติมเต็มจอ */
+  object-position: center bottom; /* ยึดด้านล่างให้เส้นน้ำชิดขอบ */
+  transform: none;            /* ไม่ต้องใช้ translateY แล้ว */
+  user-select: none; -webkit-user-drag: none;
+}
+
+/* แคนวาสทับพื้นหลัง */
+#scene{
+  position: fixed;
+  left: 0; right: 0;
+  top: var(--hdr);
+  height: calc(100vh - var(--hdr));
+  width: 100vw;
+  z-index: 1;     /* อยู่เหนือพื้นหลัง */
+  display: block;
+}
     /* ฉากแอนิเมชัน */
     #scene{
       position:fixed; left:0; right:0; top:var(--hdr); bottom:0;
@@ -70,7 +95,13 @@
 
   <div id="wrap">
     <!-- ภาพพื้นหลัง (ไม่อยู่ในแคนวาส จะได้ชัดและ responsive) -->
+    <!-- BG: responsive (เดสก์ท็อป = bg5.png, มือถือ = bg5mb.png) -->
+<div id="bgWrap">
+  <picture>
+    <source media="(max-width: 480px)" srcset="images/bg5mb.png">
     <img id="bgLayer" src="images/bg5.png" alt="">
+  </picture>
+</div>
     <!-- ฉากหลัก -->
     <canvas id="scene"></canvas>
   </div>
