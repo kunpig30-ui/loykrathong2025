@@ -6,6 +6,26 @@ const LANE_STEP    = 16;
 const MAX_BOATS    = 20;
 const VERSION_QS   = '?v=13';
 
+// --- Start Gate: ป้องกันค้างที่หน้าการ์ด ---
+(function initStartGate(){
+  const gate = document.getElementById('startGate');
+  if (!gate) return;
+
+  const btn  = document.getElementById('introStart');
+  const hide = async () => {
+    try { gate.remove(); } catch {}
+    // เล่นเพลงได้แล้วเพราะมี user gesture
+    try { const bgm = document.getElementById('bgm'); if (bgm && bgm.paused) await bgm.play(); } catch {}
+  };
+
+  // คลิกปุ่ม/พื้นที่มืดเพื่อเริ่ม
+  btn?.addEventListener('click', hide);
+  gate.addEventListener('click', (e)=>{ if (e.target === gate) hide(); });
+
+  // กันไว้อีกชั้น: ถ้าโหลดครบแล้วยังไม่กด ใน 2.5s ให้เอาออกเอง
+  setTimeout(()=>{ if (document.body.contains(gate)) hide(); }, 2500);
+})();
+
 /* ===== Elements ===== */
 const cvs   = document.getElementById('scene');
 const ctx   = cvs.getContext('2d');
