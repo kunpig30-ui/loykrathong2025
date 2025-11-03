@@ -1,3 +1,14 @@
+// --- guard: อย่าให้ init ซ้ำ แม้ถูกโหลดซ้ำ ---
+if (window.__loyInit) { console.warn('loykrathong already initialized'); }
+else {
+  window.__loyInit = true;
+  (function () {
+
+    /* ทั้งหมดของ main.js เดิมวางไว้ในวงเล็บนี้ */
+    /* ... โค้ดเดิมของคุณทั้งหมด ... */
+
+  })();
+}
 // main.js — single source of truth (ห่อทั้งหมดใน IIFE ป้องกันชนชื่อ)
 (() => {
   const VERSION_QS = '?v=13';
