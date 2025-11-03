@@ -1,3 +1,7 @@
+if (window.__loyInit) { console.warn('loykrathong already initialized'); }
+else {
+  window.__loyInit = true;
+  (function () {
 // --- guard: กัน init ซ้ำแม้สคริปต์ถูกโหลดซ้ำ/แคช ---
 if (window.__loyInit) {
   console.warn('loykrathong already initialized');
