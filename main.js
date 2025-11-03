@@ -1,3 +1,11 @@
+// --- guard: กัน init ซ้ำแม้สคริปต์ถูกโหลดซ้ำ/แคช ---
+if (window.__loyInit) {
+  console.warn('loykrathong already initialized');
+  // หยุดตรงนี้เลย ถ้ารันมาแล้ว
+} else {
+  window.__loyInit = true;
+  (function () {
+    // ===== จากบรรทัดนี้ลงไปคือโค้ดเดิมทั้งหมดของคุณ =====
 // --- guard: อย่าให้ init ซ้ำ แม้ถูกโหลดซ้ำ ---
 if (window.__loyInit) { console.warn('loykrathong already initialized'); }
 else {
@@ -209,4 +217,5 @@ else {
   }
   requestAnimationFrame(loop);
 
-})();
+  })();
+}
