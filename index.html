@@ -69,6 +69,21 @@
       <input id="wish" type="text" class="btn" style="min-width:240px" placeholder="พิมพ์คำอธิษฐาน… (กด Enter ก็ได้)">
       <button id="launch" class="btn good">ปล่อย</button>
     </div>
+    <!-- Start Gate overlay (ป้องกันค้าง) -->
+<div id="startGate" style="
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(3,10,20,.85);z-index:9999;">
+  <div style="min-width:280px;max-width:90vw;padding:24px 20px;border-radius:14px;
+              background:#0e1726;color:#e9f0ff;box-shadow:0 10px 30px rgba(0,0,0,.45);
+              text-align:center;border:1px solid rgba(120,160,255,.15)">
+    <div style="margin-bottom:12px;font-weight:700">แตะเพื่อเริ่มลอยกระทง</div>
+    <div style="opacity:.8;margin-bottom:16px">กำลังเตรียมฉาก…</div>
+    <button id="introStart" style="background:#16a34a;color:#fff;border:0;
+            padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer">
+      เริ่ม
+    </button>
+  </div>
+</div>
   </header>
 
   <div id="stage">
