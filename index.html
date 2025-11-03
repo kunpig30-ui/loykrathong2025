@@ -12,14 +12,28 @@
   html,body{margin:0;height:100%;background:#061018;color:var(--ink);overflow:hidden;font-family:system-ui,"TH Sarabun New",Prompt,sans-serif}
 
   /* Header */
-  header{position:fixed;left:0;right:0;top:0;z-index:12;
-    background:linear-gradient(180deg,#061018 0%,#081625 100%);
-    border-bottom:1px solid #0b2344; padding:.6rem .8rem}
-  header .row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-  .pill{background:#0c213f;color:#bcd;padding:.15rem .6rem;border-radius:.6rem}
-  .btn{background:#174372;border:1px solid #2c5f96;color:#e9f0ff;border-radius:.55rem;padding:.42rem .7rem;cursor:pointer}
-  .btn.good{background:#0f6a3b;border-color:#168c53}
-  .btn.bad{background:#2f3f6b;border-color:#49649d}
+  <header id="hdr">
+  <div class="row">
+    <strong>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</strong>
+  </div>
+
+  <!-- แถวที่ 1: ช่องพิมพ์ + ปุ่มปล่อย -->
+  <div class="row" style="margin-top:.45rem">
+    <input id="wish" type="text" class="btn" style="min-width:260px" placeholder="พิมพ์คำอธิษฐาน… (กด Enter ก็ได้)">
+    <button id="launch" class="btn good">ปล่อย</button>
+  </div>
+
+  <!-- แถวที่ 2: สถิติ + เพลง + CSV + รีเซ็ต (ย้ายลงมาตามคำขอ) -->
+  <div class="row" style="margin-top:.35rem">
+    <span class="pill">ลอยแล้ว <b id="statCount">0</b> ใบ</span>
+    <button id="playBtn" class="btn">▶ เล่นเพลง</button>
+    <button id="stopBtn" class="btn">⏸ หยุด</button>
+    <button id="csvBtn" class="btn bad">⬇️ รายงาน CSV</button>
+    <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
+  </div>
+
+  <!-- (คง #splash ไว้เหมือนเดิม) -->
+</header>
 
   /* เวทีฉาก (ด้านหลัง header แบบพอดีหน้าจอ) */
   #stage{position:fixed;left:0;right:0;top:var(--hdr);bottom:0;z-index:0;overflow:hidden}
@@ -74,11 +88,9 @@
 
   <div id="stage">
     <picture>
-      <!-- ใช้พื้นหลังมือถือ (แนวตั้ง) -->
-      <source media="(max-width:640px)" srcset="bg5mb.png">
-      <!-- เดสก์ท็อป -->
-      <img id="bg" src="bg5.png" alt="background">
-    </picture>
+  <source media="(max-width:640px)" srcset="images/bg5mb.png">
+  <img id="bg" src="images/bg5.png" alt="background">
+</picture>
     <canvas id="scene"></canvas>
   </div>
 
@@ -316,10 +328,27 @@ function loop(ts){
   const dt = Math.min(0.033, (ts-last)/1000); last=ts; waveT+=dt;
   ctx.clearRect(0,0,cvs.clientWidth,cvs.clientHeight);
   drawWater();
+  drawWater();
+  drawRoadLine();
+if (TUK_ENABLED) drawTuk(dt);
   for(const fw of fireworks){ fw.update(dt); fw.draw(ctx); }
   const ordered = boats.slice().sort((a,b)=>a.y-b.y);
   for(const b of ordered){ b.update(dt); b.draw(ctx); }
   requestAnimationFrame(loop);
+}
+  const TUK_ENABLED = true;  // เปิดใช้งาน
+const tuk = { x:-220, w:140, h:90, speed:35 };
+
+function roadY(){ return cvs.clientHeight * WATER_PCT; } // เส้นแดง = ขอบน้ำ
+function drawRoadLine(){
+  const y = roadY();
+  ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.clientWidth,y); ctx.stroke();
+}
+function drawTuk(dt){
+  tuk.x += tuk.speed*dt; if (tuk.x > cvs.clientWidth + 220) tuk.x = -220;
+  const y = roadY() - tuk.h - 4; // เหนือเส้นแดงแน่นอน
+  if (tukImg && tukImg.complete && tukImg.naturalWidth) ctx.drawImage(tukImg, tuk.x, y, tuk.w, tuk.h);
 }
 requestAnimationFrame(loop);
 
