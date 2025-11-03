@@ -1,4 +1,3 @@
-
 // ---- singleton guard: ป้องกันไฟล์ถูกรันซ้ำ/ประกาศตัวแปรซ้ำ ----
 if (window.__loyBooted) { console.warn('loykrathong already booted'); }
 else { window.__loyBooted = true; (function(){
