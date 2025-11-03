@@ -1,81 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
   <style>
-    :root{ --hdr:72px; --panel:#0e1726; --ink:#e9f0ff; --muted:#9bb0c9; }
+    :root{ --hdr:72px; --ink:#e9f0ff; }
     html,body{margin:0;height:100%;background:#061018;color:var(--ink);font-family:system-ui,"TH Sarabun New",Prompt,sans-serif;overflow:hidden}
-
-    /* Header */
-    header{position:fixed;left:0;right:0;top:0;z-index:12;background:linear-gradient(180deg,#061018 0%,#081625 100%);border-bottom:1px solid #0b2344;padding:.6rem .8rem}
+    header{position:fixed;inset:0 0 auto 0;z-index:12;background:linear-gradient(180deg,#061018,#081625);border-bottom:1px solid #0b2344;padding:.6rem .8rem}
     header .row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-    .btn{background:#174372;border:1px solid #2c5f96;color:#e9f0ff;border-radius:.55rem;padding:.42rem .7rem;cursor:pointer}
-    .btn.good{background:#0f6a3b;border-color:#168c53}
     .pill{background:#0c213f;color:#bcd;padding:.15rem .6rem;border-radius:.6rem}
-
-    /* เวที */
-    #stage{position:fixed;left:0;right:0;top:var(--hdr);bottom:0;z-index:0;overflow:hidden}
-    #bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;z-index:0}
-    #scene{position:absolute;inset:0;display:block;z-index:1;touch-action:manipulation}
-
-    /* รายชื่อคำอธิษฐานมุมซ้ายล่าง */
-    #wishList{position:fixed;left:10px;bottom:10px;z-index:9;color:#bbccdd;list-style:none;margin:0;padding:0;font-size:clamp(14px,2.5vw,16px)}
+    .btn{background:#174372;border:1px solid #2c5f96;color:#e9f0ff;border-radius:.55rem;padding:.42rem .7rem}
+    .btn.good{background:#0f6a3b;border-color:#168c53}
+    #stage{position:fixed;left:0;right:0;top:var(--hdr);bottom:0;overflow:hidden}
+    #bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom}
+    #scene{position:absolute;inset:0;display:block}
+    #wishList{position:fixed;left:10px;bottom:10px;right:10px;list-style:none;margin:0;padding:0;color:#bbccdd;z-index:9}
     #wishList .num{display:inline-block;width:62px;opacity:.8}
-
-    /* Toast */
-    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 80px);
-      background:#0e1726;border:1px solid #243b6b;border-radius:.7rem;padding:.5rem .9rem;opacity:0;transition:.28s;z-index:13}
-    #toast.show{opacity:.96}
-
-    /* Splash เริ่ม */
-    #splash{position:fixed;inset:0;display:grid;place-items:center;background:rgba(3,7,14,.86);z-index:20}
-    #splash.hide{opacity:0;pointer-events:none;transition:.35s}
-    .card{background:#0e1726;border:1px solid #223a66;border-radius:.9rem;padding:1rem 1.1rem;width:min(92vw,520px);text-align:center}
+    #splash{position:fixed;inset:0;display:grid;place-items:center;background:rgba(3,10,20,.85);z-index:9999}
+    #splash .card{background:#0e1726;border:1px solid rgba(120,160,255,.15);border-radius:14px;padding:20px;color:#e9f0ff;box-shadow:0 10px 30px rgba(0,0,0,.45);text-align:center}
   </style>
 </head>
 <body>
-  <script src="main.js?v=13.1" defer></script>
   <header id="hdr">
     <div class="row">
       <strong>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</strong>
       <span class="pill">ลอยแล้ว <b id="statCount">0</b> ใบ</span>
+      <button id="playBtn" class="btn">▶ เล่นเพลง</button>
+      <button id="stopBtn" class="btn">⏸ หยุด</button>
+      <button id="csvBtn"  class="btn">⬇️ CSV สถิติ</button>
     </div>
     <div class="row" style="margin-top:.45rem">
-      <input id="wish" type="text" class="btn" style="min-width:260px" placeholder="พิมพ์คำอธิษฐาน… (กด Enter ได้)">
-      <button id="launch"   class="btn good">ปล่อย</button>
-      <button id="playBtn"  class="btn">▶ เล่นเพลง</button>
-      <button id="stopBtn"  class="btn">⏸ หยุด</button>
-      <button id="csvBtn"   class="btn">⬇️ CSV สถิติ</button>
-      <button id="resetBtn" class="btn">🧹 เริ่มนับใหม่</button>
+      <input id="wish" class="btn" placeholder="พิมพ์คำอธิษฐาน… (Enter ก็ได้)" style="min-width:260px">
+      <button id="launch" class="btn good">ปล่อย</button>
     </div>
   </header>
 
+  <div id="splash">
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">แตะเพื่อเริ่มลอยกระทง</div>
+      <div id="loadInfo" style="opacity:.8;margin-bottom:12px">กำลังเตรียมฉาก…</div>
+      <button id="startBtn" class="btn good">เริ่ม</button>
+    </div>
+  </div>
+
   <div id="stage">
     <picture>
-      <source media="(max-width:640px)" srcset="images/bg5mb.png">
-      <img id="bg" src="images/bg5.png" alt="background">
+      <source media="(max-width:640px)" srcset="bg5mb.png">
+      <img id="bg" src="bg5.png" alt="">
     </picture>
     <canvas id="scene"></canvas>
   </div>
 
   <ul id="wishList"></ul>
-  <div id="toast">ปล่อยแล้ว 🎋</div>
+  <audio id="bgm" src="audio/song.mp3" preload="auto" loop playsinline></audio>
 
-  <!-- เพลง: ชี้ไปที่ audio/song.mp3 ในโฟลเดอร์ audio -->
-  <audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
-
-  <!-- Splash (ขอ gesture เล่นเสียง) -->
-  <div id="splash">
-    <div class="card">
-      <h3 style="margin:.2rem 0 .4rem 0">แตะเพื่อเริ่มลอยกระทง</h3>
-      <div id="loadInfo" style="opacity:.8;margin-bottom:.8rem">กำลังเตรียมฉาก…</div>
-      <button id="startBtn" class="btn good">เริ่ม</button>
-    </div>
-  </div>
-
-  <!-- โหลดสคริปต์เดียวเท่านั้น! ใส่ defer กันซ้อน -->
-  <script src="main.js?v=13" defer></script>
+  <!-- โหลดสคริปต์ “อันเดียว” -->
+  <script src="main.js?v=13.1" defer></script>
 </body>
 </html>
