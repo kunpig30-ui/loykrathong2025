@@ -1,110 +1,71 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
-<style>
-  :root{
-    --hdr: 72px;            /* จะถูกอัปเดตด้วย JS ตามความสูงจริงของ header */
-    --panel:#0e1726; --ink:#e9f0ff; --muted:#9bb0c9;
-  }
-  html,body{margin:0;height:100%;background:#061018;color:var(--ink);overflow:hidden;font-family:system-ui,"TH Sarabun New",Prompt,sans-serif}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+  <style>
+    :root{ --hdr:72px; --panel:#0e1726; --ink:#e9f0ff; --muted:#9bb0c9; }
+    html,body{margin:0;height:100%;background:#061018;color:var(--ink);font-family:system-ui,"TH Sarabun New",Prompt,sans-serif;overflow:hidden}
 
-  /* Header */
-  <header id="hdr">
-  <div class="row">
-    <strong>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</strong>
-  </div>
+    /* Header */
+    header{position:fixed;left:0;right:0;top:0;z-index:12;background:linear-gradient(180deg,#061018 0%,#081625 100%);border-bottom:1px solid #0b2344;padding:.6rem .8rem}
+    header .row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+    .btn{background:#174372;border:1px solid #2c5f96;color:#e9f0ff;border-radius:.55rem;padding:.42rem .7rem;cursor:pointer}
+    .btn.good{background:#0f6a3b;border-color:#168c53}
+    .pill{background:#0c213f;color:#bcd;padding:.15rem .6rem;border-radius:.6rem}
 
-  <!-- แถวที่ 1: ช่องพิมพ์ + ปุ่มปล่อย -->
-  <div class="row" style="margin-top:.45rem">
-    <input id="wish" type="text" class="btn" style="min-width:260px" placeholder="พิมพ์คำอธิษฐาน… (กด Enter ก็ได้)">
-    <button id="launch" class="btn good">ปล่อย</button>
-  </div>
+    /* เวที */
+    #stage{position:fixed;left:0;right:0;top:var(--hdr);bottom:0;z-index:0;overflow:hidden}
+    #bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;z-index:0}
+    #scene{position:absolute;inset:0;display:block;z-index:1;touch-action:manipulation}
 
-  <!-- แถวที่ 2: สถิติ + เพลง + CSV + รีเซ็ต (ย้ายลงมาตามคำขอ) -->
-  <div class="row" style="margin-top:.35rem">
-    <span class="pill">ลอยแล้ว <b id="statCount">0</b> ใบ</span>
-    <button id="playBtn" class="btn">▶ เล่นเพลง</button>
-    <button id="stopBtn" class="btn">⏸ หยุด</button>
-    <button id="csvBtn" class="btn bad">⬇️ รายงาน CSV</button>
-    <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
-  </div>
+    /* รายชื่อคำอธิษฐานมุมซ้ายล่าง */
+    #wishList{position:fixed;left:10px;bottom:10px;z-index:9;color:#bbccdd;list-style:none;margin:0;padding:0;font-size:clamp(14px,2.5vw,16px)}
+    #wishList .num{display:inline-block;width:62px;opacity:.8}
 
-  <!-- (คง #splash ไว้เหมือนเดิม) -->
-</header>
+    /* Toast */
+    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 80px);
+      background:#0e1726;border:1px solid #243b6b;border-radius:.7rem;padding:.5rem .9rem;opacity:0;transition:.28s;z-index:13}
+    #toast.show{opacity:.96}
 
-  /* เวทีฉาก (ด้านหลัง header แบบพอดีหน้าจอ) */
-  #stage{position:fixed;left:0;right:0;top:var(--hdr);bottom:0;z-index:0;overflow:hidden}
-  /* พื้นหลังใช้ picture+img เพื่อเลือกภาพมือถือ/เดสก์ท็อป */
-  #bg{position:absolute;inset:0;width:100%;height:100%;
-      object-fit:cover;           /* เติมเต็มจอ */
-      object-position:center bottom; /* เน้นให้ “น้ำ” ด้านล่างยังอยู่ในเฟรม */
-      z-index:0}
-
-  /* Canvas วาดน้ำ/กระทง/พลุ */
-  #scene{position:absolute;inset:0;display:block;z-index:1;touch-action:manipulation}
-
-  /* แถบมือถือ (กดปล่อย/เพลง) */
-  #mobileBar{position:fixed;left:0;right:0;bottom:0;z-index:11;display:none;gap:.5rem;justify-content:center;padding:.5rem;
-    background:linear-gradient(180deg,rgba(6,16,24,0),rgba(6,16,24,.85))}
-  @media (max-width:640px){ #mobileBar{display:flex} }
-
-  /* Toast */
-  #toast{position:fixed;left:50%;transform:translateX(-50%);
-    bottom:calc(env(safe-area-inset-bottom,0px) + 80px);
-    background:#0e1726;border:1px solid #243b6b;border-radius:.7rem;
-    padding:.5rem .9rem;opacity:0;transition:.28s;z-index:13}
-  #toast.show{opacity:.96}
-
-  /* Splash เริ่มเล่นครั้งแรก (ใช้สำหรับ autoplay audio บนมือถือ) */
-  #splash{position:fixed;inset:0;display:grid;place-items:center;background:rgba(3,7,14,.86);z-index:20}
-  #splash.hide{opacity:0;pointer-events:none;transition:.35s}
-  .card{background:#0e1726;border:1px solid #223a66;border-radius:.9rem;padding:1rem 1.1rem;width:min(92vw,520px);text-align:center}
-
-  /* รายการคำอวยพรมุมซ้ายล่าง */
-  #wishList{position:fixed;left:10px;bottom:10px;right:10px;z-index:9;color:#bbccdd;pointer-events:none;
-            list-style:none;margin:0;padding:0;font-size:clamp(14px,2.5vw,16px)}
-  #wishList .num{display:inline-block;width:62px;opacity:.8}
-</style>
+    /* Splash เริ่ม */
+    #splash{position:fixed;inset:0;display:grid;place-items:center;background:rgba(3,7,14,.86);z-index:20}
+    #splash.hide{opacity:0;pointer-events:none;transition:.35s}
+    .card{background:#0e1726;border:1px solid #223a66;border-radius:.9rem;padding:1rem 1.1rem;width:min(92vw,520px);text-align:center}
+  </style>
 </head>
 <body>
   <header id="hdr">
     <div class="row">
       <strong>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</strong>
       <span class="pill">ลอยแล้ว <b id="statCount">0</b> ใบ</span>
-      <button id="playBtn" class="btn">▶ เล่นเพลง</button>
-      <button id="stopBtn" class="btn">⏸ หยุด</button>
-      <button id="csvBtn" class="btn bad">⬇️ รายงาน CSV</button>
-      <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
     </div>
     <div class="row" style="margin-top:.45rem">
-      <input id="wish" type="text" class="btn" style="min-width:240px" placeholder="พิมพ์คำอธิษฐาน… (กด Enter ก็ได้)">
-      <button id="launch" class="btn good">ปล่อย</button>
+      <input id="wish" type="text" class="btn" style="min-width:260px" placeholder="พิมพ์คำอธิษฐาน… (กด Enter ได้)">
+      <button id="launch"   class="btn good">ปล่อย</button>
+      <button id="playBtn"  class="btn">▶ เล่นเพลง</button>
+      <button id="stopBtn"  class="btn">⏸ หยุด</button>
+      <button id="csvBtn"   class="btn">⬇️ CSV สถิติ</button>
+      <button id="resetBtn" class="btn">🧹 เริ่มนับใหม่</button>
     </div>
-  
   </header>
 
   <div id="stage">
     <picture>
-  <source media="(max-width:640px)" srcset="images/bg5mb.png">
-  <img id="bg" src="images/bg5.png" alt="background">
-</picture>
+      <source media="(max-width:640px)" srcset="images/bg5mb.png">
+      <img id="bg" src="images/bg5.png" alt="background">
+    </picture>
     <canvas id="scene"></canvas>
   </div>
 
   <ul id="wishList"></ul>
-  <div id="mobileBar">
-    <button id="tapLaunch" class="btn good">ปล่อยกระทง</button>
-    <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
-  </div>
   <div id="toast">ปล่อยแล้ว 🎋</div>
 
-  <!-- เพลง: จะเล่นอัตโนมัติหลังแตะเริ่ม -->
-  <audio id="bgm" loop preload="auto" src="song.mp3" playsinline></audio>
+  <!-- เพลง: ชี้ไปที่ audio/song.mp3 ในโฟลเดอร์ audio -->
+  <audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
 
-  <!-- Splash เริ่มต้น เพื่อขอ gesture เล่นเสียงบนมือถือ -->
+  <!-- Splash (ขอ gesture เล่นเสียง) -->
   <div id="splash">
     <div class="card">
       <h3 style="margin:.2rem 0 .4rem 0">แตะเพื่อเริ่มลอยกระทง</h3>
@@ -113,254 +74,7 @@
     </div>
   </div>
 
-<script>
-/* ======== ปรับค่าหลักที่นี่ ======== */
-const WATER_PCT   = 0.80;   // เส้นน้ำ: 0.80 = 80% ของความสูงเวที
-const DIP_PX      = 60;     // ระดับจุ่มกระทง
-const WAVES       = 10, WAVE_AMP = 6, WAVE_GAP = 16;
-// เปิด/ปิด รถตุ๊กตุ๊ก (ปิดไว้ตามคำขอ — ลดปัญหาเช็คเส้น)
-const TUK_ENABLED = false;
-
-/* ======== ชื่อไฟล์ทรัพยากร ======== */
-const KRATHONG_SRCS = ["images/kt1.png","images/kt2.png","images/kt3.png","images/kt4.png","images/kt5.png"];
-const LOGO_SRC      = "images/logo.png";
-
-/* ======== DOM ======== */
-const hdr   = document.getElementById('hdr');
-const bg    = document.getElementById('bg');
-const cvs   = document.getElementById('scene');
-const ctx   = cvs.getContext('2d');
-const wishEl= document.getElementById('wish');
-const toast = document.getElementById('toast');
-const bgm   = document.getElementById('bgm');
-const splash= document.getElementById('splash');
-const loadInfo = document.getElementById('loadInfo');
-
-/* ======== Layout: ขนาดเวที & Canvas แบบพอดีจอจริง ======== */
-function setHdrVar(){ document.documentElement.style.setProperty('--hdr', hdr.offsetHeight + 'px'); }
-function sizeCanvas(){
-  setHdrVar();
-  const rect = document.getElementById('stage').getBoundingClientRect();
-  // map CSS px -> device px (แต่ transform ให้วาดด้วยหน่วย CSS px)
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  cvs.style.width  = rect.width + 'px';
-  cvs.style.height = rect.height + 'px';
-  const needW = Math.round(rect.width * dpr);
-  const needH = Math.round(rect.height * dpr);
-  if (cvs.width !== needW || cvs.height !== needH){
-    cvs.width = needW; cvs.height = needH;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-}
-addEventListener('resize', sizeCanvas);
-addEventListener('orientationchange', sizeCanvas);
-if (window.visualViewport) visualViewport.addEventListener('resize', sizeCanvas);
-setTimeout(sizeCanvas, 0);
-
-/* ======== โหลดรูป ======== */
-function loadImage(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; });}
-let KIMGS=[], logoImg=null, ready=0, total=KRATHONG_SRCS.length+1;
-function mark(){ ready++; loadInfo.textContent = `โหลดแล้ว ${ready}/${total}`; }
-(async()=>{
-  logoImg = await loadImage(LOGO_SRC); mark();
-  for (const s of KRATHONG_SRCS){ KIMGS.push(await loadImage(s)); mark(); }
-})();
-
-/* ======== เพลง: เล่นอัตโนมัติหลังแตะครั้งแรก ======== */
-function playBgm(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
-document.getElementById('playBtn').onclick = playBgm;
-document.getElementById('stopBtn').onclick = ()=>{ try{ bgm.pause(); }catch{} };
-document.getElementById('tapMusic').onclick = ()=>{ if(bgm.paused) playBgm(); else bgm.pause(); };
-
-document.getElementById('startBtn').onclick = ()=>{
-  splash.classList.add('hide');
-  playBgm();
-  setTimeout(()=>splash.remove?.(), 350);
-};
-
-/* ======== Counter + Wish + CSV ======== */
-const LS_COUNT="loy.count", LS_WQ="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
-let total=+(localStorage.getItem(LS_COUNT)||0), seq=+(localStorage.getItem(LS_SEQ)||0);
-document.getElementById('statCount').textContent=total;
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
-function renderWish(){
-  const ul=document.getElementById('wishList'); let q=[];
-  try{ q=JSON.parse(localStorage.getItem(LS_WQ)||"[]"); }catch{}
-  const view=q.slice(-7);
-  ul.innerHTML=view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join("");
-}
-renderWish();
-
-function bump(){ total++; localStorage.setItem(LS_COUNT,total); document.getElementById('statCount').textContent=total; }
-function pushWish(text){
-  let q=[]; try{ q=JSON.parse(localStorage.getItem(LS_WQ)||"[]"); }catch{}
-  seq++; localStorage.setItem(LS_SEQ,seq);
-  const item={n:seq,w:text||"",t:Date.now()};
-  q.push(item); localStorage.setItem(LS_WQ,JSON.stringify(q));
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
-  log.push(item); localStorage.setItem(LS_LOG,JSON.stringify(log));
-  renderWish();
-}
-function exportCSV(){
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
-  const rows=[["seq","timestamp","ISO","wish"]];
-  for(const x of log){ const iso=new Date(x.t||Date.now()).toISOString();
-    rows.push([x.n,x.t,iso,(x.w||"").replace(/"/g,'""')]); }
-  const csv=rows.map(r=>r.map(v=>`"${String(v)}"`).join(",")).join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download="loykrathong_report.csv";
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-document.getElementById('csvBtn').onclick = exportCSV;
-
-document.getElementById('resetBtn').onclick=()=>{
-  if(confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")){
-    [LS_COUNT,LS_WQ,LS_SEQ,LS_LOG].forEach(k=>localStorage.removeItem(k));
-    total=0; seq=0; document.getElementById('statCount').textContent=0;
-    boats.length=0; renderWish();
-  }
-};
-
-/* ======== ปล่อยกระทง ======== */
-function showToast(){ toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),650); }
-function haptic(){ if('vibrate' in navigator) try{ navigator.vibrate(12);}catch{} }
-
-document.getElementById('launch').onclick = ()=>{
-  const t = wishEl.value.trim(); wishEl.value="";
-  launch(t); bump(); pushWish(t); showToast(); haptic();
-};
-document.getElementById('tapLaunch').onclick = ()=>{ launch(""); bump(); pushWish(""); showToast(); haptic(); };
-cvs.addEventListener('click', ()=>{ launch(""); bump(); pushWish(""); showToast(); haptic(); });
-cvs.addEventListener('touchstart', ()=>{ launch(""); bump(); pushWish(""); showToast(); haptic(); }, {passive:true});
-
-/* ======== โมเดลน้ำ/กระทง/พลุ ======== */
-function waterY(){ return cvs.clientHeight * WATER_PCT; }
-
-class Krathong{
-  constructor(img, text){
-    this.img=img; this.text=text||""; this.size=92; this.x=-140;
-    this.vx = 30 + Math.random()*14;
-    this.phase=Math.random()*Math.PI*2; this.amp=2.2; this.freq=.9+Math.random()*.5; this.t=0;
-    this.y = this.computeY(0);
-  }
-  computeY(t){ const bob=Math.sin(t*this.freq+this.phase)*this.amp; return waterY()-this.size*.5 + DIP_PX + bob; }
-  update(dt){ this.x+=this.vx*dt; if(this.x>cvs.clientWidth+160) this.x=-160; this.t+=dt; this.y=this.computeY(this.t); }
-  draw(g){
-    const wy=waterY(), rx=this.size*.55, ry=6;
-    const grd=g.createRadialGradient(this.x,wy,1,this.x,wy,rx);
-    grd.addColorStop(0,'rgba(0,0,0,.22)'); grd.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=grd;
-    g.beginPath(); g.ellipse(this.x,wy,rx,ry,0,0,Math.PI*2); g.fill();
-    if(this.img && this.img.complete && this.img.naturalWidth){
-      g.drawImage(this.img,this.x-this.size/2,this.y-this.size/2,this.size,this.size);
-    }else{
-      g.fillStyle='#27ae60'; g.beginPath(); g.arc(this.x,this.y,this.size/2,0,Math.PI*2); g.fill();
-    }
-    if(this.text){
-      const msg = this.text.length>22 ? (this.text.slice(0,21)+'…') : this.text;
-      g.font="600 15px system-ui,'TH Sarabun New',Prompt,sans-serif";
-      g.textAlign="center"; g.textBaseline="middle";
-      const pad=12, w=Math.min(320, g.measureText(msg).width + pad*2), h=26;
-      const cx=this.x, cy=this.y - this.size*.75;
-      g.save();
-      g.globalAlpha=.85; g.fillStyle="#0e1726"; roundRect(g,cx-w/2,cy-h/2,w,h,14); g.fill();
-      g.globalAlpha=1; g.strokeStyle="rgba(255,255,255,.25)"; g.lineWidth=1; roundRect(g,cx-w/2,cy-h/2,w,h,14); g.stroke();
-      g.fillStyle="#e9f0ff"; g.fillText(msg,cx,cy); g.restore();
-    }
-  }
-}
-function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
-
-const boats=[]; let nextIdx=0;
-function launch(text){
-  const imgs=KIMGS.filter(Boolean); let im=null;
-  if(imgs.length){ im=imgs[nextIdx % imgs.length]; nextIdx=(nextIdx+1)%imgs.length; }
-  boats.push(new Krathong(im,text));
-  if(boats.length>24) boats.splice(0, boats.length-24);
-}
-
-/* พลุเป็นโลโก้ แตกทุก ๆ 10 วิ */
-class Firework{
-  constructor(x){ this.x=x; this.y=waterY(); this.vy=-280; this.state='rise'; this.parts=[]; }
-  update(dt){
-    if(this.state==='rise'){ this.y+=this.vy*dt; this.vy+=140*dt; if(this.vy>=-10) this.explode(); }
-    else{
-      for(const p of this.parts){ p.vx*=0.99; p.vy+=70*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.a*=0.985; }
-      this.parts = this.parts.filter(p=>p.a>0.06);
-    }
-  }
-  explode(){ this.state='explode'; for(let i=0;i<36;i++){ const a=i/36*Math.PI*2, sp=110+Math.random()*90; this.parts.push({x:this.x,y:this.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,a:1}); } }
-  draw(g){
-    if(this.state==='rise'){ g.strokeStyle='rgba(255,220,120,.9)'; g.beginPath(); g.moveTo(this.x,this.y+16); g.lineTo(this.x,this.y); g.stroke(); }
-    for(const p of this.parts){
-      const R=64*p.a;
-      if(logoImg && logoImg.complete && logoImg.naturalWidth){
-        g.save(); g.globalAlpha=p.a; g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2); g.restore();
-      }else{
-        g.save(); g.globalAlpha=p.a; g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill();
-        g.lineWidth=8; g.strokeStyle='#e31f26'; g.beginPath(); g.arc(p.x,p.y,R-4,0,Math.PI*2); g.stroke(); g.restore();
-      }
-    }
-  }
-}
-const fireworks=[]; function spawnTriple(){ const w=cvs.clientWidth; [w*.25,w*.5,w*.75].forEach(x=>fireworks.push(new Firework(x))); }
-spawnTriple(); setInterval(spawnTriple, 10000);
-
-/* ======== วาดน้ำ & ลูปหลัก ======== */
-let waveT=0, last=performance.now();
-
-function drawWater(){
-  const w=cvs.clientWidth, h=cvs.clientHeight, y=waterY();
-  ctx.fillStyle='rgba(10,32,63,0.96)'; ctx.fillRect(0,y,w,h-y);
-  ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.strokeStyle='rgba(255,255,255,0.20)';
-  for(let i=0;i<WAVES;i++){
-    ctx.beginPath();
-    for(let x=0;x<w;x+=20){
-      const yy=y + Math.sin((x/40)+waveT*1.2+i)*WAVE_AMP + i*WAVE_GAP;
-      if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
-    }
-    ctx.stroke();
-  }
-}
-
-function loop(ts){
-  const dt = Math.min(0.033, (ts-last)/1000); last=ts; waveT+=dt;
-  ctx.clearRect(0,0,cvs.clientWidth,cvs.clientHeight);
-  drawWater();
-  drawWater();
-  drawRoadLine();
-if (TUK_ENABLED) drawTuk(dt);
-  for(const fw of fireworks){ fw.update(dt); fw.draw(ctx); }
-  const ordered = boats.slice().sort((a,b)=>a.y-b.y);
-  for(const b of ordered){ b.update(dt); b.draw(ctx); }
-  requestAnimationFrame(loop);
-}
-  const TUK_ENABLED = true;  // เปิดใช้งาน
-const tuk = { x:-220, w:140, h:90, speed:35 };
-
-function roadY(){ return cvs.clientHeight * WATER_PCT; } // เส้นแดง = ขอบน้ำ
-function drawRoadLine(){
-  const y = roadY();
-  ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(cvs.clientWidth,y); ctx.stroke();
-}
-function drawTuk(dt){
-  tuk.x += tuk.speed*dt; if (tuk.x > cvs.clientWidth + 220) tuk.x = -220;
-  const y = roadY() - tuk.h - 4; // เหนือเส้นแดงแน่นอน
-  if (tukImg && tukImg.complete && tukImg.naturalWidth) ctx.drawImage(tukImg, tuk.x, y, tuk.w, tuk.h);
-}
-requestAnimationFrame(loop);
-
-/* เริ่มต้นให้ทุกอย่างมีขนาดถูกต้อง */
-sizeCanvas();
-
-/* ช็อตคัต: Enter = ปล่อยกระทง */
-wishEl.addEventListener('keydown', e=>{
-  if(e.key==="Enter"){ document.getElementById('launch').click(); }
-});
-
-/* (เลือกได้) เปิดรถตุ๊กตุ๊กในอนาคต: เติมโค้ดวาดใน draw ก่อนวาดเรือ แล้วคุมด้วย TUK_ENABLED */
-</script>
+  <!-- โหลดสคริปต์เดียวเท่านั้น! ใส่ defer กันซ้อน -->
+  <script src="main.js?v=13" defer></script>
 </body>
 </html>
