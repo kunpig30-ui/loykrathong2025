@@ -1,5 +1,7 @@
-// Singleton guard ป้องกันโหลดซ้ำ
-if (!window.__loyInit) { window.__loyInit = true; (function(){
+
+// ---- singleton guard: ป้องกันไฟล์ถูกรันซ้ำ/ประกาศตัวแปรซ้ำ ----
+if (window.__loyBooted) { console.warn('loykrathong already booted'); }
+else { window.__loyBooted = true; (function(){
 /* ===== Core tune ===== */
 const WATER_PCT = 0.80;     // ระดับผิวน้ำ (สัดส่วนสูงจอ)
 const ROAD_DY   = 0;        // เส้นแดง = ขอบน้ำ (0 = ตรงกันพอดี)
@@ -224,4 +226,4 @@ document.getElementById('startBtn').onclick = async ()=>{
   requestAnimationFrame(loop);
 };
 
-})(); } // end singleton
+})(); } // ---- end singleton guard ----
